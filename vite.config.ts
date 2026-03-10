@@ -55,18 +55,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       // 是否自动打开浏览器
       open: true,
       proxy: {
-        // 反向代理解决跨域
-        // env.VITE_APP_BASE_API：本地地址
-        [env.VITE_APP_BASE_API]: {
-          // env.VITE_APP_TARGET_URL：请求地址，到时候会将本地地址替换成请求地址
-          target: env.VITE_APP_TARGET_URL,
-          // 为true时会将请求头地址改为target地址
+        '/dev-api': {  // 固定前缀，不要用env变量
+          target: 'http://8.130.28.128:3000/qq', // 直接用线上API
           changeOrigin: true,
-          rewrite: (path) =>
-            path.replace(
-              new RegExp("^" + env.VITE_APP_BASE_API),
-              env.VITE_APP_TARGET_BASE_URL
-            ), // 替换 /dev-api 为 target 接口地址
+          rewrite: (path) => path.replace(/^\/dev-api/, ''),
         },
       },
     },

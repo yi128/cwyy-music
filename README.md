@@ -122,3 +122,36 @@ $ npm install
 ```shell
 $ node app.js
 ```
+## 项目结构
+src/
+├── api/                # API接口定义（按功能模块组织）
+├── assets/             # 静态资源（图片、图标、404页面等）
+├── common/             # 通用模型定义
+├── components/         # 通用组件
+├── enums/              # TypeScript枚举类型
+├── lang/               # 国际化配置
+├── layout/             # 布局组件
+├── router/             # 路由配置
+├── staticData/         # 静态数据
+├── stores/              # Pinia状态管理
+├── styles/             # 全局样式
+├── types/              # TypeScript类型定义
+├── utils/              # 工具函数
+├── views/              # 页面组件
+├── App.vue             # 根组件
+├── main.ts             # 入口文件
+├── permission.ts       # 权限管理
+└── settings.ts         # 项目设置
+##  模仿实现核心功能
+javascript
+// 选择2-3个核心功能进行重写
+// 示例：用户登录模块
+├── Login.vue           // 登录页面
+├── api/user.js        // 登录接口
+├── store/user.js      // 用户状态
+└── utils/auth.js      // 认证工具
+## 遇到的问题及解决方法
+页面懒加载
+watch里动态导入
+防抖功能：搜索框那里等用户输入完毕后再发送请求
+stores下的player相当于一个全局的状态管理，每个组件拿到的信息都是一样的，每个组件都可以修改player的状态

@@ -106,10 +106,10 @@ export const newSongs = [
 
 // 播放地址映射（使用网易云官方试听地址）
 export const songUrls: Record<string, string> = {
-    '167876': 'https://music.163.com/song/media/outer/url?id=167876.mp3',
-    '185709': 'https://music.163.com/song/media/outer/url?id=185709.mp3',
-    '5279202': 'https://music.163.com/song/media/outer/url?id=5279202.mp3',
-    '256401': 'https://music.163.com/song/media/outer/url?id=256401.mp3',
-    '308598': 'https://music.163.com/song/media/outer/url?id=308598.mp3',
-    '190375': 'https://music.163.com/song/media/outer/url?id=190375.mp3',
+    '167876': 'https://www.soundjay.com/button/beep-07.mp3',
+    '185709': 'https://www.soundjay.com/button/beep-07.mp3',
+    '5279202': 'https://www.soundjay.com/button/beep-07.mp3',
+    '256401': 'https://www.soundjay.com/button/beep-07.mp3',
+    '308598': 'https://www.soundjay.com/button/beep-07.mp3',
+    '190375': 'https://www.soundjay.com/button/beep-07.mp3',
 }

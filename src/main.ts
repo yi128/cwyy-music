@@ -8,7 +8,6 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import 'uno.css'
 import './router/guard'
 
-// 添加图标到库
 library.add(faRepeat, faArrowRotateRight, faShuffle)
 
 const app = createApp(App)

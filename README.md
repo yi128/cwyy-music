@@ -1,157 +1,43 @@
+# 网易云音乐网页版
+
 <p align="center">
     <img src="https://img.shields.io/badge/Vue-3.3.4-brightgreen.svg"/>
     <img src="https://img.shields.io/badge/Vite-4.5.1-green.svg"/>
-    <img src="https://img.shields.io/badge/Element Plus-2.3.12-blue.svg"/>
+    <img src="https://img.shields.io/badge/TypeScript-5.0.2-blue.svg"/>
+    <img src="https://img.shields.io/badge/Element Plus-2.3.12-orange.svg"/>
+    <img src="https://img.shields.io/badge/Pinia-2.1.6-purple.svg"/>
     <img src="https://img.shields.io/badge/license-MIT-green.svg"/>
-    <a href="https://gitee.com/youarefortunate" target="_blank">
-        <img src="https://img.shields.io/badge/Author-Youarefortunate-orange.svg"/>
-    </a>
 </p>
-
 
 ## 项目介绍
 
-本项目包含 Vue3 + Vite4+ TypeScript5 + Element-Plus + Pinia 等最新主流技术栈构建的网易云音乐项目，除此之外，项目使用的接口是网易云NodeApi来进行请求并获取到数据
+这是一个基于 Vue 3 + TypeScript 构建的网易云音乐网页版项目，实现了音乐播放、歌单管理、搜索等核心功能。
 
-项目实现功能：
+### 技术栈
 
-- 四种登录方式：
-  - 扫码登录
-  - 账号密码登录
-  - 手机验证码登录
-  - 网易邮箱登录
-- 个人信息主页：用户个人信息、用户创建的歌单、用户收藏的歌单、编辑用户个人信息
-- 歌单详情页：歌单信息、歌单音乐列表、歌单评论列表、歌单收藏者
-- 视频：包含视频、MV两大模块
-- 私人FM、最近播放列表、我喜欢的音乐列表（登录之后才会显示）
-- 搜索：搜索歌曲、歌手、专辑、歌单
-- 歌曲详情页：歌词滚动、歌曲评论列表、为歌曲评论点赞、发送评论、回复评论、删除评论（只能删除自己的评论）
-- 音乐功能：歌曲上下切换、歌曲播放模式（随机、列表、单曲循环）、音量调节、显示当前播放列表、双击播放歌曲、鼠标右键歌曲列表播放音乐、查看评论、添加该歌曲为下一首播放等等
-- 项目设置：暗夜模式、主题颜色切换等
+- **前端框架**：Vue 3 (Composition API)
+- **构建工具**：Vite 4
+- **类型系统**：TypeScript 5
+- **UI组件库**：Element Plus
+- **状态管理**：Pinia
+- **路由管理**：Vue Router 4
+- **CSS解决方案**：SCSS
+- **图标库**：Font Awesome
 
-## 项目预览
+## 功能特性
 
-- **在线预览**：[预览地址](http://43.139.205.178:9527/)
+### 核心功能
+- 🎵 **音乐播放**：支持播放/暂停、上一曲/下一曲、音量调节、进度条拖动
+- 📋 **播放模式**：顺序播放、单曲循环、随机播放
+- 📝 **播放列表**：侧边栏显示当前播放列表，支持歌曲删除
+- 🔍 **搜索功能**：支持歌曲、歌单搜索
+- 💾 **Mock数据**：完全离线可用，不依赖真实API
 
-- **首页**
+### 页面功能
+- **首页**：轮播图、推荐歌单、最新音乐
+- **歌单详情页**：歌单信息、歌曲列表、播放全部/单曲播放、收藏功能
+- **我的歌单页**：我创建的歌单、收藏的歌单、创建/批量删除
+- **搜索结果页**：歌曲/歌单分类展示
+- **播放器**：底部固定播放控制栏
 
-  ![首页](https://gitee.com/youarefortunate/music_readme_preview_img/raw/master/home.png)
-
-- **MV**
-
-  ![MV](https://gitee.com/youarefortunate/music_readme_preview_img/raw/master/mv.png)
-
-- **个人信息主页**
-
-  ![个人主页](https://gitee.com/youarefortunate/music_readme_preview_img/raw/master/user-profile.png)
-
-- **歌单详情页**
-
-  ![歌单详情页](https://gitee.com/youarefortunate/music_readme_preview_img/raw/master/songlist-detail.png)
-
-- **歌曲详情页**
-
-  ![歌曲详情页](https://gitee.com/youarefortunate/music_readme_preview_img/raw/master/music-detail.png)
-
-- **暗夜模式**
-
-  |![个人信息主页-暗夜模式](https://gitee.com/youarefortunate/music_readme_preview_img/raw/master/user-profile-dark.png) | ![歌曲详情页-暗夜模式](https://gitee.com/youarefortunate/music_readme_preview_img/raw/master/music-detail-dark.png) |
-  | ------------------------------------------------------ | ------------------------------------------------------ |
-  | ![搜索音乐-暗夜模式](https://gitee.com/youarefortunate/music_readme_preview_img/raw/master/search-music-dark.png) | ![排行榜-暗夜模式](https://gitee.com/youarefortunate/music_readme_preview_img/raw/master/ranking-dark.png)
-
-## 项目地址
-
-| 项目 | Gitee                                                        | Github                                                       |
-| ---- | ------------------------------------------------------------ | ------------------------------------------------------------ | 
-| 前端 | [music-gitee](https://gitee.com/youarefortunate/music) | [music-github](https://github.com/Youarefortunate/music) |  |
-| 后端 | [网易云NodeApi-Gitee](https://gitee.com/long-wenwu-bala/netease-cloud-music-api.git)       | [网易云NodeApi-GitHub](https://github.com/w4ctech/NeteaseCloudMusicApi.git) |
-
-## 环境准备
-
-| 环境                 | 名称版本                                                     | 备注                                                         |
-| -------------------- | :----------------------------------------------------------- | ------------------------------------------------------------ |
-| **开发工具**         | VSCode                                                       | [下载地址](https://code.visualstudio.com/Download)           |
-| **运行环境**         | Node 18+                                                     | [下载地址](http://nodejs.cn/download)                        |
-| **VSCode插件(必装)** | 1. `Vue Language Features (Volar) ` <br/> 2. `TypeScript Vue Plugin (Volar) `  <br/>3. 禁用 Vetur | ![vscode-plugin](https://foruda.gitee.com/images/1687755823108948048/d0198b2d_716974.png) |
-
-## 项目启动
-
-```bash
-# 克隆项目
-git clone https://gitee.com/youarefortunate/music.git
-
-# 进入项目目录
-cd music
-
-# 安装依赖
-npm install
-
-# 启动项目
-npm run dev
-
-# 项目打包
-npm run build
-```
-
-## 网易云NodeApi接口文档
-
-- [网易云NodeApi接口文档](https://binaryify.github.io/NeteaseCloudMusicApi/#/)
-
-## 环境要求
-
-需要 NodeJS 14+ 环境
-
-## 安装
-
-```shell
-$ git clone git@github.com:Binaryify/NeteaseCloudMusicApi.git
-$ cd NeteaseCloudMusicApi
-$ npm install
-```
-
-或者
-
-```shell
-$ git clone https://github.com/Binaryify/NeteaseCloudMusicApi.git
-$ cd NeteaseCloudMusicApi
-$ npm install
-```
-
-## 运行
-
-```shell
-$ node app.js
-```
 ## 项目结构
-src/
-├── api/                # API接口定义（按功能模块组织）
-├── assets/             # 静态资源（图片、图标、404页面等）
-├── common/             # 通用模型定义
-├── components/         # 通用组件
-├── enums/              # TypeScript枚举类型
-├── lang/               # 国际化配置
-├── layout/             # 布局组件
-├── router/             # 路由配置
-├── staticData/         # 静态数据
-├── stores/              # Pinia状态管理
-├── styles/             # 全局样式
-├── types/              # TypeScript类型定义
-├── utils/              # 工具函数
-├── views/              # 页面组件
-├── App.vue             # 根组件
-├── main.ts             # 入口文件
-├── permission.ts       # 权限管理
-└── settings.ts         # 项目设置
-##  模仿实现核心功能
-javascript
-// 选择2-3个核心功能进行重写
-// 示例：用户登录模块
-├── Login.vue           // 登录页面
-├── api/user.js        // 登录接口
-├── store/user.js      // 用户状态
-└── utils/auth.js      // 认证工具
-## 遇到的问题及解决方法
-页面懒加载
-watch里动态导入
-防抖功能：搜索框那里等用户输入完毕后再发送请求
-stores下的player相当于一个全局的状态管理，每个组件拿到的信息都是一样的，每个组件都可以修改player的状态

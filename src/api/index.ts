@@ -19,6 +19,8 @@ export const {
     getCreatedPlaylists,
     getCollectedPlaylists,
     createPlaylist,
+    subscribePlaylist,
+    unsubscribePlaylist,
 
     // 首页
     getBanners,

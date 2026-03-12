@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref,watch,onUnmounted } from 'vue'
 import router from '@/router'
 const keyword = ref('')
 const isFocused = ref(false)
@@ -51,6 +51,12 @@ watch(keyword, (newVal) => {
       // 这里可以做实时搜索建议
     }
   }, 500)
+})
+// 组件卸载时清除定时器
+onUnmounted(() => {
+  if (searchTimer.value) {
+    clearTimeout(searchTimer.value)
+  }
 })
 </script>
 

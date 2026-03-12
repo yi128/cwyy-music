@@ -17,9 +17,6 @@
           <div class="song-name">{{ songName }}</div>
           <div class="song-artist">{{ artists }}</div>
         </div>
-        <button class="like-btn" title="喜欢">
-          ♡
-        </button>
       </div>
       
       <!-- 中间：播放控制 -->
@@ -34,13 +31,16 @@
                 <font-awesome-icon v-if="playMode === 2" :icon="['fas', 'shuffle']" />
           </button>
           <button class="control-btn" title="上一曲" @click="playerStore.playPrev">
-            ⏮️
+            <el-icon :size="20"><DArrowLeft /></el-icon>
           </button>
           <button class="control-btn play-btn" title="播放/暂停" @click="playerStore.togglePlay">
-            {{ playing ? '⏸️' : '▶️' }}
+            <el-icon :size="40">
+              <VideoPlay v-if="!playing" />
+              <VideoPause v-else />
+            </el-icon>
           </button>
           <button class="control-btn" title="下一曲" @click="playerStore.playNext">
-            ⏭️
+            <el-icon :size="20"><DArrowRight /></el-icon>
           </button>
           <button class="control-btn" title="歌词">
             🎤
@@ -98,6 +98,7 @@ import { storeToRefs } from 'pinia'
 import { ref, watch } from 'vue'
 import { formatTime } from '@/utils/format'
 import PlaylistSidebar from '@/components/player/PlaylistSidebar.vue'
+import { VideoPlay, VideoPause,DArrowLeft, DArrowRight} from '@element-plus/icons-vue'
 const playerStore = usePlayerStore()
 const {
   playing,
@@ -252,22 +253,6 @@ const onVolumeInput = (e: Event) => {
   color: rgba(255, 255, 255, 0.7);
 }
 
-.like-btn {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 18px;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  transition: all 0.3s;
-}
-
-.like-btn:hover {
-  color: #ec4141;
-  background: rgba(236, 65, 65, 0.1);
-}
-
 /* 中间：播放控制 */
 .player-center {
   flex: 2;
@@ -286,33 +271,45 @@ const onVolumeInput = (e: Event) => {
 .control-btn {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 18px;
   cursor: pointer;
   padding: 8px;
   border-radius: 50%;
   transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; 
+  height: 40px;
 }
 
 .control-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  color:  #ec4141;
+  background: rgba(236, 65, 65, 0.1);
+}
+
+.control-btn .el-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .play-btn {
   width: 40px;
   height: 40px;
-  background: #ec4141;
-  color: white;
+  color: #ec4141;
   font-size: 16px;
   box-shadow: 0 2px 8px rgba(236, 65, 65, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .play-btn:hover {
-  background: #ff5555;
+  color: #ff5555;
   transform: scale(1.05);
 }
-
 .mode-btn {
   font-size: 16px;
 }

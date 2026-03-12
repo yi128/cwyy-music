@@ -64,6 +64,7 @@ declare module 'vue' {
     IEpSetting: typeof import('~icons/ep/setting')['default']
     LangSelect: typeof import('./../components/LangSelect/index.vue')['default']
     LatestMusic: typeof import('./../views/dashboard/components/LatestMusic/index.vue')['default']
+    Layout: typeof import('./../components/layout/Layout.vue')['default']
     LeftMenu: typeof import('./../layout/components/Sidebar/LeftMenu.vue')['default']
     Link: typeof import('./../layout/components/Sidebar/Link.vue')['default']
     Logo: typeof import('./../layout/components/Sidebar/Logo.vue')['default']

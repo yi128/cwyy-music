@@ -138,7 +138,7 @@ export const mockApi = {
     // 获取收藏的歌单
     async getCollectedPlaylists() {
         await delay(300)
-        return success(recommendPlaylists)
+        return success(recommendPlaylists.slice(0, 4))
     },
 
     // 创建新歌单
@@ -156,8 +156,26 @@ export const mockApi = {
             },
             trackCount: 0
         }
-        // 这里只是模拟，实际应该在服务器端添加
         return success(newPlaylist)
+    },
+    // 收藏歌单
+    async subscribePlaylist(id: string) {
+        await delay(300)
+        if (playlistDetails[id]) {
+            playlistDetails[id].subscribed = true
+            return success({ subscribed: true })
+        }
+        return error('歌单不存在', 404)
+    },
+
+    // 取消收藏歌单
+    async unsubscribePlaylist(id: string) {
+        await delay(300)
+        if (playlistDetails[id]) {
+            playlistDetails[id].subscribed = false
+            return success({ subscribed: false })
+        }
+        return error('歌单不存在', 404)
     },
     // ==================== 首页相关 ====================
     // 获取轮播图

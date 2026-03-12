@@ -95,10 +95,11 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getPlaylistDetail } from '@/api/index'
+import { getPlaylistDetail, subscribePlaylist, unsubscribePlaylist } from '@/api/index'
 import { useRoute } from 'vue-router'
-import { ElMessage,ElBacktop } from 'element-plus'
+import { ElMessage} from 'element-plus'
 import { usePlayerStore } from '@/stores/player'
+import {useUserStore} from '@/stores/user'
 import type { PlaylistDetail, Song } from '@/types/music'
 import { formatTime, formatCount } from '@/utils/format'
 // 创建默认值
@@ -117,6 +118,7 @@ const defaultPlaylist: PlaylistDetail = {
   tracks: []
 }
 const playerStore = usePlayerStore()
+const userStore=useUserStore()
 const playlistDetail = ref<PlaylistDetail>(defaultPlaylist)
 const songs = ref<Song[]>([])
 const loading = ref(true)
@@ -124,6 +126,7 @@ const error = ref('')
 const route = useRoute()
 const playlistId = route.params.playlistId as string
 const isCollected = ref(false)
+const collecting=ref(false)//防止重复点击
 // 加载歌单详情
 const loadData = async () => {
     try {
@@ -131,8 +134,15 @@ const loadData = async () => {
         error.value = ''
         const res = await getPlaylistDetail(playlistId)
         if (res.code===200 && res.data) {
-            playlistDetail.value = res.data
-            songs.value=res.data.tracks || []
+          playlistDetail.value = res.data
+          songs.value = res.data.tracks || []
+          isCollected.value = res.data.subscribed || false
+          // 当用户已登录时，才会显示收藏状态
+          if (userStore.isLoggedIn) {
+            isCollected.value = res.data.subscribed || false
+          } else {
+            isCollected.value = false  // 未登录默认为未收藏
+          }
         } else {
             error.value="歌单不存在"
         }
@@ -145,14 +155,49 @@ const loadData = async () => {
     }
 }
 // 收藏/取消收藏歌单
-const toggleCollect = () => {
-  isCollected.value = !isCollected.value
+const toggleCollect = async () => {
+  // 未登录时，提示登录
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  if (collecting.value) return
+  collecting.value = true
+  // 保存原始状态
+  const originalState = isCollected.value
+  // 乐观更新
+  try {
+    isCollected.value = !isCollected.value
+    let res
     if (isCollected.value) {
-    ElMessage.success('已收藏')
-  } else {
-    ElMessage.info('已取消收藏')
+      res=await subscribePlaylist(playlistId)
+    } else {
+      res=await unsubscribePlaylist(playlistId)
+    }
+    if (res.code === 200) {
+      playlistDetail.value.subscribed = isCollected.value
+      ElMessage.success(isCollected.value ? '收藏成功' : '取消收藏成功')
+    } else {
+      // 失败，回滚状态
+      isCollected.value = originalState
+      ElMessage.error('操作失败')
+    }
+  } catch (err) {
+    // 出错，回滚状态
+    isCollected.value = originalState
+    ElMessage.error('网络错误')
+    console.log(err)
+  } finally {
+    collecting.value = false
   }
 }
+// 监听登录状态变化
+watch(() => userStore.isLoggedIn, (newVal) => {
+  if (playlistDetail.value.id) {
+    // 重新加载时更新收藏状态
+    isCollected.value = newVal ? playlistDetail.value.subscribed : false
+  }
+})
 // 播放全部
 const playAll = () => {
   if (songs.value.length === 0) {

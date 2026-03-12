@@ -46,6 +46,15 @@ export const recommendPlaylists = [
         description: '让你的心跳跟着节奏',
         creator: { nickname: '电子音乐', avatarUrl: '' },
         trackCount: 70
+    },
+    {
+        id: 'playlist_006',
+        name: '午后咖啡',
+        coverImgUrl: 'https://p1.music.126.net/4mG9K5tL3k9f8N2J1P7QxQ==/109951168945678923.jpg?imageView=1&thumbnail=800y800&enlarge=1%7CimageView=1&watermark&type=1&image=b2JqL3c1bkRrTUtRd3JMRGpEekNtOE9tLzc2MzkxNzc3Nzc5LzBlNWEvMjAyNTEwMTExODU3MzAveDQ1MjE3NjI4NTg2NTAwNjIucG5n&dx=0&dy=0%7Cwatermark&type=1&image=b2JqL3dvbkRsc0tVd3JMQ2xHakNtOEt4LzI3NjEwNDk3MDYyL2VlOTMvOTIxYS82NjE4LzdhMDc5ZDg0NTYyMDAwZmVkZWJmMjVjYjE4NjhkOWEzLnBuZw==&dx=0&dy=0%7CimageView=1?param=200y200',
+        playCount: 298765,
+        description: '一杯咖啡，一段旋律',
+        creator: { nickname: '爵士午后', avatarUrl: '' },
+        trackCount: 52
     }
 ]
 
@@ -92,11 +101,11 @@ export const playlistDetails: Record<string, any> = {
         subscribed: false,
         tags: ['摇滚', '经典', '乐队'],
         tracks: [
-            hotSongs[2], // 如愿 (王菲)
-            hotSongs[0], // 一路生花 (温奕心)
-            hotSongs[3], // 爱你 (王心凌)
-            hotSongs[4], // 最美的太阳 (张杰)
-            hotSongs[1], // 孤勇者 (陈奕迅)
+            hotSongs[2],
+            hotSongs[0],
+            hotSongs[3],
+            hotSongs[4],
+            hotSongs[1],
             {
                 id: 'rock_001',
                 name: '海阔天空',
@@ -192,8 +201,8 @@ export const playlistDetails: Record<string, any> = {
                 interval: 185,
                 album: { id: 'album_009', name: 'Alone', picUrl: '' }
             },
-            hotSongs[1], // 孤勇者
-            hotSongs[3], // 爱你
+            hotSongs[1],
+            hotSongs[3],
             {
                 id: 'electronic_004',
                 name: 'Unity',

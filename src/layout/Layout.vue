@@ -40,16 +40,57 @@
         
         <!-- 登录区域 -->
         <div class="user-area">
-          <div v-if="!isLoggedIn" class="login-section">
+          <div v-if="!userStore.isLoggedIn" class="login-section">
             <button class="login-btn" @click="showLogin = true">登录</button>
             <div class="divider">|</div>
             <button class="register-btn" @click="showRegister = true">注册</button>
           </div>
-          <div v-else class="user-info">
-            <div class="user-avatar" @click="showUserMenu">
-              <img :src="userAvatar" alt="用户头像" />
+          
+          <!-- 已登录状态 - 美化后的用户菜单 -->
+          <div 
+            v-else 
+            class="user-info" 
+            @click="showUserMenu = !showUserMenu" 
+            ref="userMenuRef"
+          >
+            <div class="user-avatar">
+              <img :src="userStore.userInfo.avatarUrl" alt="用户头像" />
+              <span class="avatar-badge"></span>
             </div>
-            <div class="user-name">{{ userName }}</div>
+            <span class="user-name">{{ userStore.userInfo.nickname }}</span>
+            <span class="arrow" :class="{ 'arrow-up': showUserMenu }">▼</span>
+            
+            <!-- 美化后的下拉菜单 -->
+            <transition name="dropdown">
+              <div v-if="showUserMenu" class="user-dropdown">
+                <div class="dropdown-header">
+                  <div class="header-info">
+                    <p class="user-nickname">{{ userStore.userInfo.nickname }}</p>
+                    <p class="user-phone">{{ userStore.userInfo.phone }}</p>
+                  </div>
+                </div>
+                
+                <div class="dropdown-menu">
+                  <div class="menu-item" @click.stop="goToMyPlaylists">
+                    <span class="menu-icon">📋</span>
+                    <span>我的歌单</span>
+                  </div>
+                  <div class="menu-item" @click.stop="goToProfile">
+                    <span class="menu-icon">👤</span>
+                    <span>个人资料</span>
+                  </div>
+                  <div class="menu-item" @click.stop="goToSettings">
+                    <span class="menu-icon">⚙️</span>
+                    <span>设置</span>
+                  </div>
+                  <div class="menu-divider"></div>
+                  <div class="menu-item logout" @click.stop="handleLogout">
+                    <span class="menu-icon">🚪</span>
+                    <span>退出登录</span>
+                  </div>
+                </div>
+              </div>
+            </transition>
           </div>
         </div>
       </div>
@@ -57,7 +98,7 @@
 
     <!-- 主要内容区域 -->
     <main class="main-content">
-      <router-view />
+      <router-view @open-login="showLogin = true" />
     </main>
     
     <!-- 底部播放器 -->
@@ -73,17 +114,38 @@
           <button class="close-btn" @click="showLogin = false">×</button>
         </div>
         <div class="modal-body">
-          <input v-model="loginForm.username" placeholder="手机号/邮箱" class="input-field" />
-          <input v-model="loginForm.password" type="password" placeholder="密码" class="input-field" />
-          <div class="terms-row">
-          <input type="checkbox" />
-          <span class="terms-text">同意
-            <a href="#">《服务条款》</a>
-          </span>
+          <input 
+            v-model="loginForm.username" 
+            placeholder="手机号" 
+            class="input-field"
+            type="tel"
+            maxlength="11"
+          />
+          <input 
+            v-model="loginForm.password" 
+            type="password" 
+            placeholder="密码" 
+            class="input-field"
+            @keyup.enter="handleLogin" 
+          />
+          <!-- 测试账号 -->
+          <div class="quick-fill">
+            <button class="fill-btn" @click="loginForm.username = '13800138000'; loginForm.password = '123456'">测试账号1</button>
+            <button class="fill-btn" @click="loginForm.username = '13900139000'; loginForm.password = '123456'">测试账号2</button>
           </div>
-            <button class="submit-btn" @click="handleLogin">
-              登录
-            </button>
+          <div class="terms-row">
+            <input type="checkbox" v-model="agreeTerms" />
+            <span class="terms-text">同意
+              <a href="#">《服务条款》</a>
+            </span>
+          </div>
+          <button 
+            class="submit-btn"
+            @click="handleLogin"
+            :disabled="!agreeTerms || !loginForm.username || !loginForm.password"
+          >
+            登录
+          </button>
           <p class="modal-tip">测试阶段可以直接点击登录</p>
         </div>
       </div>
@@ -106,13 +168,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import SearchBar from '@/components/search/SearchBar.vue'
 import PlayerBar from '@/components/player/PlayerBar.vue'
-// 用户状态
-const isLoggedIn = ref(false)
-const userName = ref('')
-const userAvatar = ref('https://picsum.photos/32/32?random=1')
+import { useUserStore } from '@/stores/user'
+import { ElMessage } from 'element-plus'
+import { onClickOutside } from '@vueuse/core'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const userStore = useUserStore()
+
+// 菜单状态
+const showUserMenu = ref(false)
+const userMenuRef = ref()
 
 // 弹窗状态
 const showLogin = ref(false)
@@ -124,30 +193,55 @@ const loginForm = reactive({
   password: ''
 })
 
+// 同意条款
+const agreeTerms = ref(false)
+
 const showComingSoon = (feature: string) => {
   alert(`${feature} 功能开发中...`)
 }
 
-const goToSearch = () => {
-  // 可以跳转到搜索页面或显示搜索弹窗
-  alert('搜索功能开发中...')
-}
-
 const handleLogin = () => {
-  // 模拟登录成功
-  isLoggedIn.value = true
-  userName.value = loginForm.username || '测试用户'
+  userStore.login(loginForm.username, loginForm.password)
   showLogin.value = false
   
   // 清空表单
   loginForm.username = ''
   loginForm.password = ''
+  agreeTerms.value = false
   
-  alert('登录成功！')
+  ElMessage.success('登录成功!')
 }
 
-const showUserMenu = () => {
-  alert('用户菜单（开发中）')
+// 点击外部关闭菜单
+onClickOutside(userMenuRef, () => {
+  showUserMenu.value = false
+})
+
+// 恢复登录状态
+onMounted(() => {
+  userStore.restoreLogin()
+})
+
+const goToMyPlaylists = () => {
+  router.push('/my-playlists')
+  showUserMenu.value = false
+}
+
+const goToProfile = () => {
+  alert('个人资料（开发中）')
+  showUserMenu.value = false
+}
+
+const goToSettings = () => {
+  alert('设置功能开发中')
+  showUserMenu.value = false
+}
+
+const handleLogout = () => {
+  userStore.logout()
+  showUserMenu.value = false
+  ElMessage.success('已退出登录')
+  router.push('/')
 }
 </script>
 
@@ -227,31 +321,6 @@ const showUserMenu = () => {
   align-items: center;
 }
 
-.search-box {
-  padding: 8px 16px;
-  background: #f5f5f5;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.search-box:hover {
-  background: #e8e8e8;
-}
-
-.search-icon {
-  color: #666;
-  font-size: 14px;
-}
-
-.search-text {
-  color: #666;
-  font-size: 14px;
-}
-
 /* 用户区域样式 */
 .user-area {
   display: flex;
@@ -283,19 +352,30 @@ const showUserMenu = () => {
   font-size: 14px;
 }
 
-/* 已登录状态 */
+/* 已登录状态 - 美化后的样式 */
 .user-info {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 30px;
   cursor: pointer;
+  transition: all 0.3s;
+  background: transparent;
+}
+
+.user-info:hover {
+  background: #f5f5f5;
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
+  position: relative;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   overflow: hidden;
+  border: 2px solid #ec4141;
 }
 
 .user-avatar img {
@@ -304,9 +384,137 @@ const showUserMenu = () => {
   object-fit: cover;
 }
 
+.avatar-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background: #52c41a;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
 .user-name {
   font-size: 14px;
   color: #333;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrow {
+  font-size: 12px;
+  color: #999;
+  transition: transform 0.3s;
+}
+
+.arrow-up {
+  transform: rotate(180deg);
+}
+
+/* 下拉菜单动画 */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.3s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* 下拉菜单样式 */
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 240px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.user-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 20px;
+  width: 12px;
+  height: 12px;
+  background: white;
+  transform: rotate(45deg);
+  box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.04);
+}
+
+.dropdown-header {
+  padding: 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-nickname {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.user-phone {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+}
+
+.dropdown-menu {
+  padding: 8px 0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.menu-item:hover {
+  background: #f5f5f5;
+  color: #ec4141;
+}
+
+.menu-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.menu-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 8px 0;
+}
+
+.menu-item.logout {
+  color: #999;
+}
+
+.menu-item.logout:hover {
+  background: #fff0f0;
+  color: #ec4141;
 }
 
 /* 内容区域 */
@@ -315,8 +523,6 @@ const showUserMenu = () => {
   overflow-y: auto;
   padding-bottom: 80px;
 }
-
-/* 播放器样式 */
 
 /* 弹窗样式 */
 .modal-overlay {
@@ -399,6 +605,30 @@ const showUserMenu = () => {
   color: #c0c4cc;
 }
 
+/* 测试账号快捷填充 */
+.quick-fill {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.fill-btn {
+  flex: 1;
+  padding: 8px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.fill-btn:hover {
+  background: #e8e8e8;
+  color: #ec4141;
+}
+
 /* 同意条款行 */
 .terms-row {
   display: flex;
@@ -436,6 +666,11 @@ const showUserMenu = () => {
 
 .submit-btn:hover {
   background: #d43c3c;
+}
+
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* 底部提示 */

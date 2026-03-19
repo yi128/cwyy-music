@@ -70,10 +70,10 @@
     ```
 
 3.  **启动 API 服务（重要）**
-    本项目依赖 [NeteaseCloudMusicApi](https://gitcode.com/Binaryify/NeteaseCloudMusicApi) 提供真实数据。你需要单独下载并运行该 API 服务。
+    本项目依赖 [NeteaseCloudMusicApi](https://neteasecloudmusicapienhanced.js.org/#/) 提供真实数据。你需要单独下载并运行该 API 服务。
     ```bash
     # 克隆 API 服务项目
-    git clone https://gitcode.com/Binaryify/NeteaseCloudMusicApi.git
+    git clone https://github.com/neteasecloudmusicapienhanced/api-enhanced.git
     cd NeteaseCloudMusicApi
     npm install
     node app.js
@@ -155,6 +155,35 @@ wyy-music/
 ## 📄 许可证
 
 本项目采用 MIT 许可证。
+
+## 🙏 致谢
+
+感谢以下开源项目和社区的支持，让这个项目得以实现：
+
+### 核心依赖
+- [Vue 3](https://vuejs.org/) - 渐进式 JavaScript 框架
+- [Vite](https://vitejs.dev/) - 下一代前端构建工具
+- [TypeScript](https://www.typescriptlang.org/) - JavaScript 类型超集
+- [Pinia](https://pinia.vuejs.org/) - Vue 状态管理库
+- [Vue Router](https://router.vuejs.org/) - Vue 官方路由
+- [Element Plus](https://element-plus.org/) - Vue 3 组件库
+- [Axios](https://axios-http.com/) - HTTP 客户端
+
+### 数据支持
+- [NeteaseCloudMusicApi](https://gitcode.com/Binaryify/NeteaseCloudMusicApi) - 网易云音乐 API 服务
+- [@neteasecloudmusicapienhanced/api](https://github.com/neteasecloudmusicapienhanced/api-enhanced) - 增强版 API 服务
+
+### 开发工具
+- [VS Code](https://code.visualstudio.com/) - 代码编辑器
+- [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) - Vue 3 开发工具
+- [ESLint](https://eslint.org/) - 代码规范检查
+- [Prettier](https://prettier.io/) - 代码格式化
+
+### 设计参考
+- [网易云音乐](https://music.163.com/) - UI 设计灵感来源
+
+### 特别感谢
+感谢所有贡献者和开源社区的支持，以及在学习过程中提供帮助的开发者们。
 
 ---
 

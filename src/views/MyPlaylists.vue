@@ -73,17 +73,17 @@
     <section class="playlist-section">
       <div class="section-header">
         <h3>收藏的歌单</h3>
-        <span class="section-count">{{ collectedPlaylists.length }}</span>
+        <span class="section-count">{{ subscribedPlaylists.length }}</span>
       </div>
       
-      <div v-if="collectedPlaylists.length === 0" class="empty-state">
+      <div v-if="subscribedPlaylists.length === 0" class="empty-state">
         <p>还没有收藏任何歌单</p>
         <p class="empty-tip">去发现音乐，收藏你喜欢的歌单吧！</p>
       </div>
       
       <div v-else class="playlist-grid">
         <div 
-          v-for="playlist in collectedPlaylists"
+          v-for="playlist in subscribedPlaylists"
           :key="playlist.id"
           class="playlist-card"
           :class="{ 'manage-mode': isManageMode, 'selected': selectedPlaylists.includes(playlist.id) }"
@@ -109,9 +109,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { getCreatedPlaylists, getCollectedPlaylists } from '@/api/index'
+import { getUserCreatedPlaylists, getUserSubscribedPlaylists } from '@/api/realApi'
 import { useUserStore } from '@/stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { Playlist } from '@/types/music'
@@ -119,26 +119,26 @@ import type { Playlist } from '@/types/music'
 const router = useRouter()
 const userStore=useUserStore()
 const createdPlaylists = ref<Playlist[]>([])
-const collectedPlaylists = ref<Playlist[]>([])
+const subscribedPlaylists = ref<Playlist[]>([])
 const loading=ref(false)
 
 // 管理模式相关
 const isManageMode = ref(false)
-const selectedPlaylists = ref<string[]>([])
+const selectedPlaylists = ref<number[]>([])
 
 // 加载数据
 const loadData = async () => {
   loading.value=true
   try {
     const [createdRes, collectedRes] = await Promise.all([
-      getCreatedPlaylists(), 
-      getCollectedPlaylists()
+      getUserCreatedPlaylists(userStore.userInfo.userId as number, userStore.userInfo.userId as number), 
+      getUserSubscribedPlaylists(userStore.userInfo.userId)
     ])
-    if (createdRes.code === 200) {
+    if (createdRes.data.code === 200) {
       createdPlaylists.value = createdRes.data
     }
     if (collectedRes.code === 200) {
-      collectedPlaylists.value = collectedRes.data
+      subscribedPlaylists.value = collectedRes.data
     }
   } catch (err) {
     console.error('加载歌单数据失败:', err)
@@ -147,6 +147,29 @@ const loadData = async () => {
     loading.value=false
   }
 }
+// 监听收藏歌单ID列表的变化
+watch(() => userStore.collectedPlaylistIds, async (newIds, oldIds) => {
+  console.log('收藏歌单ID列表变化:', { from: oldIds, to: newIds })
+  
+  if (!userStore.isLoggedIn || !userStore.userInfo.userId) return
+  
+  // 如果收藏列表变长了，说明新增了收藏，需要重新加载数据
+  if (newIds.length > (oldIds?.length || 0)) {
+    console.log('检测到新增收藏，重新加载歌单数据')
+    await loadData()
+  } else if (newIds.length < (oldIds?.length || 0)) {
+    // 如果收藏列表变短了，说明取消了收藏，从当前列表中移除
+    console.log('检测到取消收藏，更新视图')
+    
+    // 找出被取消收藏的歌单ID
+    const removedIds = oldIds?.filter(id => !newIds.includes(id)) || []
+    
+    // 从收藏列表中移除这些歌单
+    subscribedPlaylists.value = subscribedPlaylists.value.filter(
+      p => !removedIds.includes(p.id)
+    )
+  }
+}, { deep: true })
 // 监听登录状态变化
 watch(() => userStore.isLoggedIn, (newVal) => {
   if (newVal) {
@@ -154,10 +177,10 @@ watch(() => userStore.isLoggedIn, (newVal) => {
     loadData()
   } else {
     createdPlaylists.value = []
-    collectedPlaylists.value = []
+    subscribedPlaylists.value = []
     exitManageMode()
   }
-})
+},{immediate:true})
 
 // 检查歌单名是否重复
 const isNameDuplicate = (name: string): boolean => {
@@ -188,11 +211,10 @@ const createMyPlaylist = async () => {
     
     // 创建新歌单对象
     const newPlaylist: Playlist = {
-      id: `created_${Date.now()}`,
+      id:Date.now(),
       name: name,
       coverImgUrl: `https://picsum.photos/200/200?random=${Date.now()}`,
       playCount: 0,
-      description: '新建歌单',
       creator: { 
         nickname: '我', 
         avatarUrl: '' 
@@ -209,7 +231,7 @@ const createMyPlaylist = async () => {
 }
 
 // 查看歌单详情
-const viewPlaylist = (id: string) => {
+const viewPlaylist = (id: number) => {
   router.push(`/playlist/${id}`)
 }
 
@@ -224,7 +246,7 @@ const exitManageMode = () => {
   selectedPlaylists.value = []
 }
 
-const toggleSelect = (id: string) => {
+const toggleSelect = (id: number) => {
   const index = selectedPlaylists.value.indexOf(id)
   if (index === -1) {
     selectedPlaylists.value.push(id)
@@ -233,7 +255,7 @@ const toggleSelect = (id: string) => {
   }
 }
 
-const handleCardClick = (id: string) => {
+const handleCardClick = (id: number) => {
   if (isManageMode.value) {
     toggleSelect(id)
   } else {
@@ -262,8 +284,8 @@ const batchDeletePlaylists = async () => {
       playlist => !selectedPlaylists.value.includes(playlist.id)
     )
     
-    // 从 collectedPlaylists 中删除选中的歌单
-    collectedPlaylists.value = collectedPlaylists.value.filter(
+    // 从 subscribedPlaylists 中删除选中的歌单
+    subscribedPlaylists.value = subscribedPlaylists.value.filter(
       playlist => !selectedPlaylists.value.includes(playlist.id)
     )
     
@@ -276,7 +298,9 @@ const batchDeletePlaylists = async () => {
 }
 
 onMounted(() => { 
-  loadData()
+  if (userStore.isLoggedIn) { 
+    loadData()
+  }
 })
 </script>
 

@@ -83,6 +83,7 @@ declare module 'vue' {
     PlayerPanel: typeof import('../components/player/PlaylistSidebar.vue')['default']
     PlaylistSidebar: typeof import('./../components/player/PlaylistSidebar.vue')['default']
     Qr: typeof import('./../layout/components/NavBar/Model/qr/index.vue')['default']
+    QrCodeLogin: typeof import('./../components/QrCodeLogin.vue')['default']
     Recommend: typeof import('./../views/dashboard/components/Recommend/index.vue')['default']
     RightPanel: typeof import('./../components/RightPanel/index.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

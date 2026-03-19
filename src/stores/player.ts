@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getSongDetail, getSongUrl } from '@/api'  // 从api导入mock函数
+import { getSongDetail, getSongUrl } from '@/api/realApi'  // 从api导入mock函数
 export const usePlayerStore = defineStore('player', () => {
     // ========== state ==========
     const playlist = ref<any[]>([])//播放列表
@@ -18,14 +18,14 @@ export const usePlayerStore = defineStore('player', () => {
         currentIndex.value >= 0 ? playlist.value[currentIndex.value] : null
     )
     // 歌曲时长
-    const duration = computed(() => currentSong.value?.interval || 0)
+    const duration = computed(() => currentSong.value?.dt / 1000 || 0)
     // 封面图片
-    const picUrl = computed(() => currentSong.value?.album?.picUrl || '')
+    const picUrl = computed(() => currentSong.value?.al?.picUrl || '')
     // 歌曲名称
     const songName = computed(() => currentSong.value?.name || '')
     // 歌手
     const artists = computed(() =>
-        currentSong.value?.singer?.map((s: any) => s.name).join('/') || ''
+        currentSong.value?.ar?.map((s: any) => s.name).join('/') || ''
     )
     // 专辑名称
     const albumName = computed(() => currentSong.value?.album?.name || '')
@@ -36,12 +36,12 @@ export const usePlayerStore = defineStore('player', () => {
         playing.value = !playing.value
     }
     // 播放指定歌曲
-    const playSong = async (id: string, autoPlay = true) => {
+    const playSong = async (id: number, autoPlay = true) => {
         try {
             const res = await getSongDetail(id)
             if (res.code === 200) {
                 const song = res.data
-
+                console.log(song)
                 // 查找是否已在播放列表
                 const index = playlist.value.findIndex((s: any) => s.id === id)
                 if (index !== -1) {
@@ -71,19 +71,67 @@ export const usePlayerStore = defineStore('player', () => {
         currentIndex.value = startIndex
         playing.value = true
     }
-    // 上一首
-    const playPrev = () => {
+    // 下一首（根据播放模式）
+    const playNext = () => {
         if (playlist.value.length === 0) return
-        let newIndex = currentIndex.value - 1
-        if (newIndex < 0) newIndex = playlist.value.length - 1
+
+        let newIndex: number
+
+        switch (playMode.value) {
+            case 0: // 顺序播放
+                newIndex = currentIndex.value + 1
+                if (newIndex >= playlist.value.length) {
+                    newIndex = 0 // 循环到第一首
+                }
+                break
+
+            case 1: // 单曲循环
+                newIndex = currentIndex.value // 还是同一首
+                break
+
+            case 2: // 随机播放
+                do {
+                    newIndex = Math.floor(Math.random() * playlist.value.length)
+                } while (newIndex === currentIndex.value && playlist.value.length > 1)
+                // 如果只有一首歌，就还是同一首
+                break
+
+            default:
+                newIndex = currentIndex.value + 1
+        }
+
         currentIndex.value = newIndex
         playing.value = true
     }
-    // 下一首
-    const playNext = () => {
+
+    // 上一首
+    const playPrev = () => {
         if (playlist.value.length === 0) return
-        let newIndex = currentIndex.value + 1
-        if (newIndex >= playlist.value.length) newIndex = 0
+
+        let newIndex: number
+
+        switch (playMode.value) {
+            case 0: // 顺序播放
+                newIndex = currentIndex.value - 1
+                if (newIndex < 0) {
+                    newIndex = playlist.value.length - 1 // 循环到最后一首
+                }
+                break
+
+            case 1: // 单曲循环
+                newIndex = currentIndex.value // 还是同一首
+                break
+
+            case 2: // 随机播放
+                do {
+                    newIndex = Math.floor(Math.random() * playlist.value.length)
+                } while (newIndex === currentIndex.value && playlist.value.length > 1)
+                break
+
+            default:
+                newIndex = currentIndex.value - 1
+        }
+
         currentIndex.value = newIndex
         playing.value = true
     }

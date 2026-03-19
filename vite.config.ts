@@ -48,9 +48,11 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         },
       },
     },
+    // 开发服务器配置--解决跨域
     server: {
-      // 指定服务器应该监听哪个 IP 地址。 如果将此设置为 0.0.0.0 或者 true 将监听所有地址，包括局域网和公网地址
+      // 指定服务器应该监听哪个 IP 地址（设置为 0.0.0.0 或者 true 将监听所有地址，包括局域网和公网地址）
       host: "0.0.0.0",
+      // 从环境变量获取端口号并转换为数字类型
       port: Number(env.VITE_APP_PORT),
       // 是否自动打开浏览器
       open: true,
@@ -184,11 +186,11 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         "path-to-regexp",
       ],
     },
-    // 构建
+    // 打包优化--代码分割
     build: {
       // 每次运行时，Vite 都会检查 vite.config.ts 文件的修改时间，并将该时间戳添加到文件名中。
-      // 这有助于在文件名中记录 Vite 的构建时间，以便在构建失败时进行调试。如果你希望在构建过程中禁用此功能，timestap: false,即可
-      // timestap: false,
+      // 这有助于在文件名中记录 Vite 的构建时间，以便在构建失败时进行调试。
+      // 禁用：timestap: false,
       chunkSizeWarningLimit: 2000, // 消除打包大小超过500kb警告
       minify: "terser", // Vite 2.6.x 以上需要配置 minify: "terser", terserOptions 才能生效
       terserOptions: {

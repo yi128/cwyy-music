@@ -33,13 +33,13 @@
       <div v-if="songs.length === 0" class="empty-state">
           <p>没有找到相关歌曲</p>
       </div>
-      <div v-else class="song-item" v-for="(song,index) in songs" :key="song.id">
+      <div v-else class="song-item" v-for="(song,index) in songs" :key="song.id" @click="PlayerStore.playSong(song.id)">
         <span class="index">{{ index+1 }}</span>
         <div class="info">
           <p class="name">{{ song.name }}</p>
-          <p class="artist">{{ formatArtists(song.singer) }}</p>
+          <p class="artist">{{ formatArtists(song.artists) }}</p>
         </div>
-        <span class="duration">{{ formatTime(song.interval) }}</span>
+        <span class="duration">{{ formatTime(song.duration) }}</span>
         <button class="play-btn">▶</button>
       </div>
     </div>
@@ -51,12 +51,29 @@
         <img :src="playlist.coverImgUrl" class="cover" />
         <div class="info" @click="getPlaylistDetail(playlist)">
           <p class="name">{{playlist.name}}</p>
-          <p class="count">{{playlist.trackCount}}首</p>
+          <p class="count">{{playlist.trackCount}}张</p>
         </div>
       </div>
     </div>
-    <div v-else>
-      <p>歌手列表区域</p>  <!-- 这里只是文字，没有真正的列表 -->
+    <!-- 歌手列表 -->
+    <div v-else="currentTab === 'artist'" class="artist-list">
+      <div v-if="artists.length === 0" class="empty-state">
+        <p>没有找到相关歌手</p>
+      </div>
+      <div 
+        v-else 
+        v-for="(artist,index) in artists" 
+        :key="artist.id"
+        class="artist-item"
+      >
+        <span class="index">{{ index+1 }}</span>
+        <img :src="artist.picUrl" class="artist-avatar" />
+        <div class="artist-info">
+          <p class="artist-name">{{ artist.name }}</p>
+          <p class="artist-desc">{{ artist.alias?.join(' ') || '暂无简介' }}</p>
+        </div>
+        <span class="artist-count">专辑 {{ artist.albumSize }}首</span>
+      </div>
     </div>
     <!-- 加载更多 -->
     <div class="load-more">
@@ -68,52 +85,59 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import {usePlayerStore} from '@/stores/player'
 import { formatArtists, formatTime } from '@/utils/format'
-import {searchSongs,searchPlaylists} from '@/api/index'
-import type { Song, Playlist,PlaylistDetail } from '@/types/music'
+import {search} from '@/api/realApi'
+import type { Song, Playlist,Artist} from '@/types/music'
 import router from '@/router'
-const route=useRoute()
+const route = useRoute()
+const PlayerStore=usePlayerStore()
 const keyword = ref('')
 const currentTab = ref('song')
 const songs = ref<Song[]>([])
 const songTotal=ref(0)
 const playlists = ref<Playlist[]>([])
-const playlistTotal=ref(0)
+const playlistTotal = ref(0)
+const artists = ref<Artist[]>([])
+const artistTotal = ref(0)
 const loading = ref(false)
-// 搜索歌曲数据
-const searchSongData =async () => {
-  if (!keyword.value) return 
+// 通用搜索数据
+const searchByType = async (type: number) => {
+  if(!keyword.value)return
   loading.value = true
   try {
-    const res = await searchSongs(keyword.value, 1, 20)
+    const res = await search(keyword.value, type, 20)
     if (res.code === 200 && res.data) {
-      songs.value = res.data.songs || []
-      songTotal.value=res.data.total || 0
+      switch (type) {
+        case 1: // 歌曲
+          songs.value = res.data.songs || []
+          songTotal.value = res.data.total || 0
+          break
+        case 100: // 歌手
+          artists.value = res.data.artists || []
+          artistTotal.value = res.data.total || 0
+          break
+        case 1000: // 歌单
+          playlists.value = res.data.playlists || []
+          playlistTotal.value = res.data.total || 0
+          break
+      }
     }
   } catch (err) {
-    console.log('搜索歌曲失败:',err)
+    console.log('搜索失败:',err)
   } finally {
     loading.value=false
   }
 }
+
+// 搜索歌曲数据
+const searchSongData = () => searchByType(1)
 // 搜索歌单数据
-const searchPlaylistData = async () => {
-  if (!keyword.value) return
-  loading.value=true
-  try {
-    const res = await searchPlaylists(keyword.value, 1, 20)
-    if (res.code === 200 && res.data) {
-      playlists.value=res.data.playlists || []
-      playlistTotal.value=res.data.total || 0
-    }
-  } catch (err) {
-    console.log('搜索歌单失败:',err)
-  } finally {
-    loading.value=false
-  }
-}
+const searchPlaylistData = () => searchByType(1000)
+// 搜索歌手数据
+const searchArtistData = () => searchByType(100)
 // 获取歌单详情
-const getPlaylistDetail = (playlist: PlaylistDetail) => {
+const getPlaylistDetail = (playlist: Playlist) => {
   console.log("搜索结果跳转歌单详情",playlist)
   router.push(`/playlist/${playlist.id}`)
 }
@@ -130,6 +154,7 @@ onMounted(() => {
   if (keyword.value) {
     searchSongData()
     searchPlaylistData()
+    searchArtistData()
   }
   console.log('搜索关键词:', keyword.value)
 })
@@ -221,7 +246,6 @@ onMounted(() => {
   color: #1e1e1e;
   font-weight: 500;
 }
-
 .artist {
   margin: 0;
   font-size: 12px;
@@ -306,6 +330,60 @@ onMounted(() => {
   margin: 0;
   font-size: 12px;
   color: #999;
+}
+/* 歌手列表 */
+.artist-list {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.artist-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.artist-item:hover {
+  background: #f8f9fa;
+}
+
+.artist-item:last-child {
+  border-bottom: none;
+}
+
+.artist-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 15px;
+}
+
+.artist-info {
+  flex: 1;
+}
+
+.artist-name {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+}
+
+.artist-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #999;
+}
+
+.artist-count {
+  color: #999;
+  font-size: 13px;
+  margin-left: 15px;
 }
 /* 加载更多 */
 .load-more {

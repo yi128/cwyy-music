@@ -49,12 +49,12 @@
         
         <!-- 进度条 -->
         <div class="progress-container">
-          <span class="current-time">{{ formatTime(currentTime)}}</span>
+          <span class="current-time">{{ formatTimeFromSeconds(currentTime)}}</span>
           <div class="progress-bar" @click="onProgressChange">
             <div class="progress-fill" :style="{ width: (currentTime / (duration || 1)) * 100 + '%' }"></div>
             <div class="progress-dot" :style="{ left: (currentTime / (duration || 1)) * 100 + '%' }"></div>
           </div>
-          <span class="total-time">{{formatTime(duration)}}</span>
+          <span class="total-time">{{formatTimeFromSeconds(duration)}}</span>
         </div>
       </div>
       
@@ -96,7 +96,7 @@
 import { usePlayerStore } from '@/stores/player'
 import { storeToRefs } from 'pinia'
 import { ref, watch } from 'vue'
-import { formatTime } from '@/utils/format'
+import { formatTimeFromSeconds } from '@/utils/format'
 import PlaylistSidebar from '@/components/player/PlaylistSidebar.vue'
 import { VideoPlay, VideoPause,DArrowLeft, DArrowRight} from '@element-plus/icons-vue'
 const playerStore = usePlayerStore()
@@ -135,7 +135,7 @@ watch(currentSong, async(newSong) => {
   playerStore.setCurrentTime(0)
   if (newSong) {
     // 动态导入api模块,避免循环依赖
-    const { getSongUrl } = await import('@/api/index')
+    const { getSongUrl } = await import('@/api/realApi')
     const res = await getSongUrl(newSong.id)
     if (res.code === 200 && res.data?.url) {
       audioRef.value.src = res.data.url

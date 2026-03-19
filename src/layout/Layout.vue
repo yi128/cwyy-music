@@ -46,7 +46,7 @@
             <button class="register-btn" @click="showRegister = true">注册</button>
           </div>
           
-          <!-- 已登录状态 - 美化后的用户菜单 -->
+          <!-- 已登录状态 -->
           <div 
             v-else 
             class="user-info" 
@@ -60,7 +60,6 @@
             <span class="user-name">{{ userStore.userInfo.nickname }}</span>
             <span class="arrow" :class="{ 'arrow-up': showUserMenu }">▼</span>
             
-            <!-- 美化后的下拉菜单 -->
             <transition name="dropdown">
               <div v-if="showUserMenu" class="user-dropdown">
                 <div class="dropdown-header">
@@ -106,16 +105,44 @@
       <PlayerBar />
     </footer>
     
-    <!-- 登录弹窗 -->
+    <!-- 登录弹窗 - 支持手机、二维码和手动Cookie登录 -->
     <div v-if="showLogin" class="modal-overlay" @click.self="showLogin = false">
       <div class="login-modal">
         <div class="modal-header">
-          <h3>登录网易云音乐</h3>
+          <h3>{{ loginMode === 'password' ? '登录网易云音乐' : loginMode === 'qr' ? '扫码登录' : '手动登录' }}</h3>
           <button class="close-btn" @click="showLogin = false">×</button>
         </div>
-        <div class="modal-body">
+        
+        <!-- 登录模式切换标签 -->
+        <div class="login-tabs">
+          <button 
+            class="tab-btn" 
+            :class="{ active: loginMode === 'password' }"
+            @click="switchLoginMode('password')"
+          >
+            密码登录
+          </button>
+          <button 
+            class="tab-btn" 
+            :class="{ active: loginMode === 'qr' }"
+            @click="switchLoginMode('qr')"
+          >
+            二维码登录
+          </button>
+          <!-- 手动登录标签 -->
+          <button 
+            class="tab-btn" 
+            :class="{ active: loginMode === 'manual' }"
+            @click="switchLoginMode('manual')"
+          >
+            手动登录
+          </button>
+        </div>
+        
+        <!-- 密码登录表单 -->
+        <div v-if="loginMode === 'password'" class="modal-body">
           <input 
-            v-model="loginForm.username" 
+            v-model="loginForm.phone" 
             placeholder="手机号" 
             class="input-field"
             type="tel"
@@ -128,11 +155,6 @@
             class="input-field"
             @keyup.enter="handleLogin" 
           />
-          <!-- 测试账号 -->
-          <div class="quick-fill">
-            <button class="fill-btn" @click="loginForm.username = '13800138000'; loginForm.password = '123456'">测试账号1</button>
-            <button class="fill-btn" @click="loginForm.username = '13900139000'; loginForm.password = '123456'">测试账号2</button>
-          </div>
           <div class="terms-row">
             <input type="checkbox" v-model="agreeTerms" />
             <span class="terms-text">同意
@@ -142,11 +164,74 @@
           <button 
             class="submit-btn"
             @click="handleLogin"
-            :disabled="!agreeTerms || !loginForm.username || !loginForm.password"
+            :disabled="!agreeTerms || !loginForm.phone || !loginForm.password || loginLoading"
           >
-            登录
+            {{ loginLoading ? '登录中...' : '登录' }}
           </button>
-          <p class="modal-tip">测试阶段可以直接点击登录</p>
+        </div>
+        
+        <!-- 二维码登录组件 -->
+        <div v-else-if="loginMode === 'qr'" class="modal-body qr-modal-body">
+          <QrCodeLogin 
+            @login-success="handleQrLoginSuccess"
+            @back-to-password="loginMode = 'password'"
+            @cancel="showLogin = false"
+          />
+        </div>
+
+        <!-- 手动登录区域（用Cookie） -->
+        <div v-else-if="loginMode === 'manual'" class="modal-body manual-login">
+          <div class="manual-tip">
+            <span class="tip-icon">🔑</span>
+            <h4>手动登录（开发用）</h4>
+            <p>从浏览器复制完整Cookie后粘贴到下方</p>
+          </div>
+          
+          <textarea 
+            v-model="manualCookie" 
+            placeholder="粘贴完整的 Cookie 字符串..."
+            rows="4"
+            class="cookie-input"
+          ></textarea>
+          
+          <div class="cookie-actions">
+            <button 
+              class="submit-btn" 
+              @click="handleManualLogin"
+              :disabled="!manualCookie"
+            >
+              登录
+            </button>
+            <button class="help-btn" @click="showCookieHelp = true">
+              如何获取Cookie？
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Cookie帮助弹窗 -->
+    <div v-if="showCookieHelp" class="help-overlay" @click.self="showCookieHelp = false">
+      <div class="help-modal">
+        <div class="help-header">
+          <h4>如何获取Cookie</h4>
+          <button class="close-help-btn" @click="showCookieHelp = false">×</button>
+        </div>
+        <div class="help-content">
+          <ol>
+            <li>打开 <a href="https://music.163.com" target="_blank">网易云音乐网页版</a> 并登录</li>
+            <li>按 <strong>F12</strong> 打开开发者工具</li>
+            <li>点击顶部 <strong>「Application」</strong> 标签</li>
+            <li>在左侧找到 <strong>「Storage」→「Cookies」→「https://music.163.com」</strong></li>
+            <li>右键任意Cookie → 选择 <strong>「全部复制」</strong> 或 <strong>「Copy All」</strong></li>
+            <li>将复制的完整Cookie粘贴到输入框</li>
+          </ol>
+          <div class="help-image-note">
+            <p>📌 复制的内容应该是一长串包含 <code>MUSIC_U=xxx</code> 的文本</p>
+          </div>
+        </div>
+        <div class="help-footer">
+          <button class="got-it-btn" @click="showCookieHelp = false">知道了</button>
         </div>
       </div>
     </div>
@@ -171,6 +256,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import SearchBar from '@/components/search/SearchBar.vue'
 import PlayerBar from '@/components/player/PlayerBar.vue'
+import QrCodeLogin from '@/components/QrCodeLogin.vue'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import { onClickOutside } from '@vueuse/core'
@@ -186,30 +272,87 @@ const userMenuRef = ref()
 // 弹窗状态
 const showLogin = ref(false)
 const showRegister = ref(false)
+const loginLoading = ref(false)
 
-// 登录表单
-const loginForm = reactive({
-  username: '',
-  password: ''
-})
+// 登录模式：'password' | 'qr' | 'manual'
+const loginMode = ref('password')
+
+// 手动登录相关
+const manualCookie = ref('')
+const showCookieHelp = ref(false)
 
 // 同意条款
 const agreeTerms = ref(false)
+
+// 登录表单
+const loginForm = reactive({
+  phone: '',
+  password: ''
+})
 
 const showComingSoon = (feature: string) => {
   alert(`${feature} 功能开发中...`)
 }
 
-const handleLogin = () => {
-  userStore.login(loginForm.username, loginForm.password)
+// 切换登录模式
+const switchLoginMode = (mode: string) => {
+  loginMode.value = mode
+}
+
+// 处理密码登录
+const handleLogin = async () => {
+  if (!agreeTerms.value) {
+    ElMessage.warning('请先同意服务条款')
+    return
+  }
+  
+  loginLoading.value = true
+  
+  try {
+    const result = await userStore.login(loginForm.phone, loginForm.password)
+    
+    if (result.success) {
+      showLogin.value = false
+      loginMode.value = 'password' // 重置为密码模式
+      // 清空表单
+      loginForm.phone = ''
+      loginForm.password = ''
+      agreeTerms.value = false
+      ElMessage.success(result.message)
+    } else {
+      ElMessage.error(result.message || '登录失败')
+    }
+  } catch (error) {
+    ElMessage.error('登录失败，请重试')
+    console.error('登录错误:', error)
+  } finally {
+    loginLoading.value = false
+  }
+}
+
+// 处理二维码登录成功
+const handleQrLoginSuccess = () => {
+  console.log('【Layout】收到 login-success 事件')
   showLogin.value = false
+  loginMode.value = 'password'
+}
+
+// 处理手动登录（Cookie）
+const handleManualLogin = async () => {
+  if (!manualCookie.value) {
+    ElMessage.warning('请先粘贴Cookie')
+    return
+  }
   
-  // 清空表单
-  loginForm.username = ''
-  loginForm.password = ''
-  agreeTerms.value = false
-  
-  ElMessage.success('登录成功!')
+  const result = await userStore.loginWithCookie(manualCookie.value)
+  if (result.success) {
+    ElMessage.success('登录成功')
+    showLogin.value = false
+    manualCookie.value = ''
+    loginMode.value = 'password'
+  } else {
+    ElMessage.error(result.message || '登录失败')
+  }
 }
 
 // 点击外部关闭菜单
@@ -541,7 +684,7 @@ const handleLogout = () => {
 .login-modal, .register-modal {
   background: white;
   border-radius: 8px;
-  width: 360px;
+  width: 420px;
   max-width: 90vw;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
@@ -573,8 +716,123 @@ const handleLogout = () => {
   color: #333;
 }
 
+/* 登录模式切换标签 */
+.login-tabs {
+  display: flex;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.tab-btn.active {
+  color: #ec4141;
+  font-weight: 500;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ec4141;
+}
+
+.tab-btn:hover {
+  color: #ec4141;
+  background: #f5f5f5;
+}
+
 .modal-body {
   padding: 24px;
+}
+
+/* 二维码登录弹窗体 */
+.qr-modal-body {
+  padding: 0;
+}
+
+/* 手动登录区域 */
+.manual-login {
+  padding: 20px;
+}
+
+.manual-tip {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.manual-tip .tip-icon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.manual-tip h4 {
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.manual-tip p {
+  margin: 0;
+  color: #999;
+  font-size: 13px;
+}
+
+.cookie-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: monospace;
+  resize: vertical;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+}
+
+.cookie-input:focus {
+  border-color: #ec4141;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(236, 65, 65, 0.1);
+}
+
+.cookie-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cookie-actions .submit-btn {
+  flex: 2;
+  margin: 0;
+}
+
+.cookie-actions .help-btn {
+  flex: 1;
+  padding: 10px;
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.cookie-actions .help-btn:hover {
+  background: #e8e8e8;
+  color: #333;
 }
 
 /* 输入框样式 */
@@ -603,30 +861,6 @@ const handleLogout = () => {
 
 .input-field::placeholder {
   color: #c0c4cc;
-}
-
-/* 测试账号快捷填充 */
-.quick-fill {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.fill-btn {
-  flex: 1;
-  padding: 8px;
-  background: #f5f5f5;
-  border: none;
-  border-radius: 4px;
-  font-size: 13px;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.fill-btn:hover {
-  background: #e8e8e8;
-  color: #ec4141;
 }
 
 /* 同意条款行 */
@@ -671,6 +905,120 @@ const handleLogout = () => {
 .submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* 帮助弹窗 */
+.help-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.help-modal {
+  background: white;
+  border-radius: 12px;
+  width: 450px;
+  max-width: 90vw;
+  overflow: hidden;
+}
+
+.help-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.help-header h4 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.close-help-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #999;
+}
+
+.close-help-btn:hover {
+  color: #666;
+}
+
+.help-content {
+  padding: 24px;
+}
+
+.help-content ol {
+  margin: 0 0 20px 0;
+  padding-left: 20px;
+  color: #666;
+  line-height: 1.8;
+}
+
+.help-content li {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.help-content a {
+  color: #ec4141;
+  text-decoration: none;
+}
+
+.help-content a:hover {
+  text-decoration: underline;
+}
+
+.help-image-note {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 4px solid #ec4141;
+}
+
+.help-image-note p {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.help-image-note code {
+  background: #e8e8e8;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  color: #d43c3c;
+}
+
+.help-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #f0f0f0;
+  text-align: center;
+}
+
+.got-it-btn {
+  padding: 8px 30px;
+  background: #ec4141;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.got-it-btn:hover {
+  background: #d43c3c;
 }
 
 /* 底部提示 */

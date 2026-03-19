@@ -34,7 +34,7 @@
             class="creator-avatar"
           >
           <span class="creator-name">{{ playlistDetail.creator.nickname }}</span>
-          <span class="create-time">2026-01-01 创建</span>
+          <span class="create-time">{{formatDate( playlistDetail.createTime) }} 创建</span>
         </div>
         
         <!-- 歌单描述 -->
@@ -48,19 +48,20 @@
             <span class="play-icon">▶</span>
             播放全部
           </button>
-          <!-- 收藏按钮  动态添加已收藏的样式（添加的类名：条件） -->
+          <!-- 收藏按钮 -->
           <button 
             class="collect-btn"
             :class="{ 'collected': isCollected }" 
             @click="toggleCollect"
+            :disabled="collecting"
           >
-            {{isCollected?'❤ 已收藏' : '❤ 收藏'}}
+            {{ isCollected ? '❤ 已收藏' : '❤ 收藏' }}
           </button>
         </div>
         <!-- 歌单统计 -->
         <div class="stats">
           <span>歌曲数: {{ playlistDetail.trackCount }}</span>
-          <span>播放数: {{formatCount( playlistDetail.playCount) }}</span>
+          <span>播放数: {{ formatCount(playlistDetail.playCount) }}</span>
           <span>分享数: {{ formatCount(playlistDetail.shareCount) }}</span>
         </div>
       </div>
@@ -68,12 +69,12 @@
 
     <!-- 歌曲列表标题 -->
     <div class="song-list-title">
-      <h3>歌曲列表 <span class="song-count">{{ playlistDetail?.trackCount || 0 }}首</span></h3>
+      <h3>歌曲列表 <span class="song-count">{{ songs.length }}首</span></h3>
     </div>
 
     <!-- 歌曲列表头部 -->
     <div class="song-list-header">
-      <span class="col-index"> </span>
+      <span class="col-index">#</span>
       <span class="col-title">歌曲标题</span>
       <span class="col-artist">歌手</span>
       <span class="col-duration">时长</span>
@@ -81,30 +82,35 @@
 
     <!-- 歌曲列表 -->
     <div class="song-list">
-      <!-- 歌曲项 1 -->
-      <div class="song-item" v-for="(song,index) in songs" :key="song.id" @click="playerStore.playSong(song.id)">
-        <span class="col-index">{{index+1}}</span>
+      <div class="song-item" v-for="(song, index) in songs" :key="song.id" @click="playerStore.playSong(song.id)">
+        <span class="col-index">{{ index + 1 }}</span>
         <div class="col-title">
           <span class="song-name">{{ song.name }}</span>
         </div>
-        <span class="col-artist">{{ song.singer[0].name}}</span>
-        <span class="col-duration">{{ formatTime(song.interval) }}</span>
+        <span class="col-artist">{{ formatArtists(song.ar) }}</span>
+        <span class="col-duration">{{ formatTime(song.dt) }}</span>
       </div>
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { getPlaylistDetail, subscribePlaylist, unsubscribePlaylist } from '@/api/index'
+import { ref, onMounted, computed } from 'vue'
+import { getPlaylistDetail } from '@/api/realApi'
 import { useRoute } from 'vue-router'
-import { ElMessage} from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { usePlayerStore } from '@/stores/player'
-import {useUserStore} from '@/stores/user'
+import { useUserStore } from '@/stores/user'
 import type { PlaylistDetail, Song } from '@/types/music'
-import { formatTime, formatCount } from '@/utils/format'
-// 创建默认值
-const defaultPlaylist: PlaylistDetail = {
-  id: '',
+import { formatTime, formatCount, formatArtists, formatDate } from '@/utils/format'
+
+const playerStore = usePlayerStore()
+const userStore = useUserStore()
+const route = useRoute()
+const playlistId = Number(route.params.playlistId)
+
+const playlistDetail = ref<PlaylistDetail>({
+  id: 0,
   name: '',
   coverImgUrl: '',
   creator: { nickname: '', avatarUrl: '' },
@@ -115,45 +121,42 @@ const defaultPlaylist: PlaylistDetail = {
   commentCount: 0,
   subscribed: false,
   tags: [],
-  tracks: []
-}
-const playerStore = usePlayerStore()
-const userStore=useUserStore()
-const playlistDetail = ref<PlaylistDetail>(defaultPlaylist)
+  tracks: [],
+  createTime: 0,
+})
+
 const songs = ref<Song[]>([])
 const loading = ref(true)
 const error = ref('')
-const route = useRoute()
-const playlistId = route.params.playlistId as string
-const isCollected = ref(false)
-const collecting=ref(false)//防止重复点击
+const collecting = ref(false)
+
+// 计算属性：判断歌单是否被收藏
+const isCollected = computed(() => {
+  return userStore.isLoggedIn && userStore.isPlaylistCollected(playlistId)
+})
+
 // 加载歌单详情
 const loadData = async () => {
-    try {
-        loading.value = true
-        error.value = ''
-        const res = await getPlaylistDetail(playlistId)
-        if (res.code===200 && res.data) {
-          playlistDetail.value = res.data
-          songs.value = res.data.tracks || []
-          isCollected.value = res.data.subscribed || false
-          // 当用户已登录时，才会显示收藏状态
-          if (userStore.isLoggedIn) {
-            isCollected.value = res.data.subscribed || false
-          } else {
-            isCollected.value = false  // 未登录默认为未收藏
-          }
-        } else {
-            error.value="歌单不存在"
-        }
-    } catch (err) {
-        error.value = "加载失败，请重试"
-        console.log(err)
-    } finally { 
-        // 不管成功还是失败，都要设置加载完成
-        loading.value = false
+  try {
+    loading.value = true
+    error.value = ''
+    const res = await getPlaylistDetail(playlistId)
+    
+    if (res.code === 200 && res.data) {
+      playlistDetail.value = res.data
+      songs.value = res.data.tracks || []
+      console.log(songs.value)
+    } else {
+      error.value = "歌单不存在"
     }
+  } catch (err) {
+    error.value = "加载失败，请重试"
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
 }
+
 // 收藏/取消收藏歌单
 const toggleCollect = async () => {
   // 未登录时，提示登录
@@ -161,43 +164,32 @@ const toggleCollect = async () => {
     ElMessage.warning('请先登录')
     return
   }
+  
   if (collecting.value) return
   collecting.value = true
-  // 保存原始状态
-  const originalState = isCollected.value
-  // 乐观更新
+  
   try {
-    isCollected.value = !isCollected.value
-    let res
+    let result
     if (isCollected.value) {
-      res=await subscribePlaylist(playlistId)
+      result = await userStore.unsubscribePlaylist(playlistId)
     } else {
-      res=await unsubscribePlaylist(playlistId)
+      result = await userStore.subscribePlaylist(playlistId)
     }
-    if (res.code === 200) {
-      playlistDetail.value.subscribed = isCollected.value
-      ElMessage.success(isCollected.value ? '收藏成功' : '取消收藏成功')
+    
+    if (result.success) {
+      ElMessage.success(result.message)
+      // ✅ 不需要手动更新 isCollected，因为 computed 会自动更新
     } else {
-      // 失败，回滚状态
-      isCollected.value = originalState
-      ElMessage.error('操作失败')
+      ElMessage.error(result.message || '操作失败')
     }
   } catch (err) {
-    // 出错，回滚状态
-    isCollected.value = originalState
     ElMessage.error('网络错误')
-    console.log(err)
+    console.error(err)
   } finally {
     collecting.value = false
   }
 }
-// 监听登录状态变化
-watch(() => userStore.isLoggedIn, (newVal) => {
-  if (playlistDetail.value.id) {
-    // 重新加载时更新收藏状态
-    isCollected.value = newVal ? playlistDetail.value.subscribed : false
-  }
-})
+
 // 播放全部
 const playAll = () => {
   if (songs.value.length === 0) {
@@ -206,10 +198,16 @@ const playAll = () => {
   }
   playerStore.playPlaylist(songs.value)
 }
+
+// 组件挂载时加载数据
 onMounted(() => {
-    loadData()
+  loadData()
 })
 </script>
+
+<style scoped>
+/* 你的样式保持不变 */
+</style>
 <style scoped>
 .playlist-detail {
   max-width: 1200px;

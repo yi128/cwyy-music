@@ -1,16 +1,42 @@
 <template>
   <div class="home-page">
-    <!-- 轮播图区域 -->
-    <el-carousel class="banner-section">
-      < v-for="b in banners" :key="b.id">
-      <el-carousel-item v-for="b in banners" :key="b.id">
-        <img 
-          :src="b?.pic"
-          :alt="b.title" 
-          class="banner-img"
-        >
-      </el-carousel-item>
-    </el-carousel>
+    <div class="banner-wrapper">
+      <el-carousel 
+        class="banner-section" 
+        :height="bannerHeight"
+        :autoplay="true"
+        :interval="5000"
+        indicator-position="none"
+      >
+        <el-carousel-item v-for="b in banners" :key="b.targetId">
+          <div 
+            class="banner-item"
+            :style="{ 
+              background: `linear-gradient(90deg, ${getGradientColor(b.imageUrl)} 0%, transparent 30%, transparent 70%, ${getGradientColor(b.imageUrl)} 100%)`
+            }"
+          >
+            <div class="banner-content">
+              <img 
+                :src="b.imageUrl" 
+                :alt="b.typeTitle" 
+                class="banner-img"
+              />
+            </div>
+          </div>
+        </el-carousel-item>
+      </el-carousel>
+      
+      <!-- 自定义指示器 -->
+      <div class="banner-dots">
+        <span 
+          v-for="(b, index) in banners" 
+          :key="index"
+          class="dot"
+          :class="{ active: currentBannerIndex === index }"
+          @click="currentBannerIndex = index"
+        ></span>
+      </div>
+    </div>
     <!-- 推荐歌单 -->
     <section class="recommend-section">
       <div class="section-header">
@@ -25,7 +51,7 @@
           @click="viewPlaylist(i.id)"
         >
           <div class="card-cover">
-            <img :src="i.coverImgUrl" alt="歌单封面" />
+            <img :src="i.picUrl" alt="歌单封面" />
             <div class="play-count">
               <span>▶ {{ formatCount(i.playCount) }}</span>
             </div>
@@ -45,10 +71,10 @@
           class="song-item"
           @click="playSong(i.id)"
         >
-          <img class="song-img" :src="i.album.picUrl"></img>
+          <img class="song-img" :src="i.picUrl"></img>
           <div class="song-info">
             <p class="song-name">{{i.name}}</p>
-            <p class="song-artist">{{ formatArtists(i.singer) }}</p>
+            <p class="song-artist">{{ formatArtists(i.artists) }}</p>
           </div>
           <div class="song-action">▶</div>
         </div>
@@ -61,7 +87,7 @@
 import {ref,onMounted} from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
-import { getRecommendPlaylists, getNewSongs, getBanners } from '@/api'
+import {getRecommendPlaylists, getBanners,getNewSongs } from '@/api/realApi'
 import type { Song, Playlist, Banner } from '@/types/music'
 import { formatArtists,formatCount } from '@/utils/format'
 const router = useRouter()
@@ -69,10 +95,42 @@ const playerStore = usePlayerStore()
 const recommendPlaylists = ref<Playlist[]>([])
 const newSongs = ref<Song[]>([])
 const banners = ref<Banner[]>([])
+const currentBannerIndex = ref(0)
+const bannerHeight = '300px'
+
+// 获取渐变颜色（
+const getGradientColor = (imageUrl: string) => {
+  const hash = imageUrl.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const colors = [
+    'rgba(236, 65, 65, 0.7)',   // 网易云红 - 主品牌色
+    'rgba(52, 152, 219, 0.7)',  // 天空蓝 - 清新感
+    'rgba(155, 89, 182, 0.7)',  // 紫罗兰 - 优雅感
+    'rgba(46, 204, 113, 0.7)',  // 翡翠绿 - 活力感
+    'rgba(241, 196, 15, 0.7)',  // 琥珀黄 - 温暖感
+    'rgba(230, 126, 34, 0.7)',  // 日落橙 - 热情感
+    'rgba(231, 76, 60, 0.7)',   // 深红色 - 激情感
+    'rgba(26, 188, 156, 0.7)',  // 青绿色 - 自然感
+    'rgba(142, 68, 173, 0.7)',  // 深紫色 - 神秘感
+    'rgba(243, 156, 18, 0.7)',  // 金黄色 - 高贵感
+  ]
+  return colors[hash % colors.length]
+}
+
+// 监听轮播图切换
+const handleBannerChange = (index: number) => {
+  currentBannerIndex.value = index
+}
+
 //加载数据
 onMounted(async () => {
   try {
-      const [playlistsRes, newSongsRes, bannersRes] = await Promise.all([getRecommendPlaylists(6), getNewSongs(5), getBanners()])
+      const [playlistsRes, newSongsRes, bannersRes] = await Promise.all ([getRecommendPlaylists(6), getNewSongs(5), getBanners()])
+      // 处理轮播图数据
+      banners.value = bannersRes.data.map((b: any) => ({
+        ...b,
+        imageUrl: b.bigImageUrl || b.imageUrl
+      }))
+    
       recommendPlaylists.value = playlistsRes.data
       newSongs.value = newSongsRes.data
       banners.value = bannersRes.data
@@ -80,12 +138,12 @@ onMounted(async () => {
     console.error('加载失败:', err)
   }
 })
-const viewPlaylist = (id: string) => {
+const viewPlaylist = (id: number) => {
   router.push(`/playlist/${id}`)
   console.log('查看歌单:', id)
 }
 
-const playSong = (id: string) => {
+const playSong = (id: number) => {
   playerStore.playSong(id)
   console.log('播放歌曲:', id)
 }
@@ -97,24 +155,102 @@ const showMore = () => {
 
 <style scoped>
 .home-page {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 20px;
 }
-.banner-img {
-  width: 100%;
-  height: 300px;
-  object-fit: cover;
-  border-radius: 12px;
-}
-.banner-section {
+/* 轮播图包装器 */
+.banner-wrapper {
+  position: relative;
   margin-bottom: 30px;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
+/* 轮播图容器 */
+.banner-section {
+  width: 100%;
+  height: v-bind(bannerHeight);
+  --el-carousel-arrow-font-size: 24px;
+  --el-carousel-arrow-size: 40px;
+  --el-carousel-arrow-background: rgba(0, 0, 0, 0.3);
+}
+
+/* 每个轮播项 */
+.banner-item {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-color: #1a1a1a;  /* 基础背景色 */
+  transition: background 0.5s ease-in-out;
+}
+
+/* 图片容器 */
+.banner-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+/* 图片样式 */
+.banner-img {
+  width: auto;
+  height: 95%; 
+  max-width: 95%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease-in-out;
+}
+
+.banner-img:hover {
+  transform: scale(1.02);
+}
+
+/* 自定义指示器 */
+.banner-dots {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1px;
+  z-index: 10;
+}
+
+.dot {
+  width: 40px;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+   backdrop-filter: blur(4px);
+}
+
+.dot.active {
+  width: 50px;
+  background-color: #ec4141;
+  box-shadow: 0 2px 8px rgba(236, 65, 65, 0.4);
+}
+
+.dot:hover {
+  background-color: rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
+}
 .recommend-section {
   margin: 40px 0;
 }
-
+.new-music-section,.recommend-section{
+  padding: 0 100px;
+}
 .section-header {
   display: flex;
   justify-content: space-between;

@@ -24,7 +24,7 @@
           <span>{{index +1}}</span>
           <div class="info">
             <p class="name">{{song.name}}</p>
-            <p class="artist">{{formatArtists(song.singer)}}</p>
+            <p class="artist">{{formatArtists(song.ar)}}</p>
           </div>
           <button class="delete-btn" @click.stop="clearSong(song.id)">✕</button>
         </div>
@@ -57,8 +57,9 @@ const close = () => {
   emit('update:visible',false)
 }
 // 播放歌曲
-const playSong = async (id: string) => {
+const playSong = async (id: number) => {
   // 如果点击的歌曲刚好正在播放，直接返回不要更新播放的信息和进度
+  console.log('currentSong',playlist.value)
   if (currentSong.value?.id === id) {
     ElMessage.info('当前歌曲正在播放')
     return 

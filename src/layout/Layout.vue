@@ -186,7 +186,12 @@
             <h4>手动登录（开发用）</h4>
             <p>从浏览器复制完整Cookie后粘贴到下方</p>
           </div>
-          
+          <div class="demo-quick-fill" v-if="isDev">
+        <button class="demo-btn" @click="fillDemoCookie">
+          填入演示Cookie
+        </button>
+        <span class="demo-hint">（Cookie已脱敏处理，仅用于演示）</span>
+        </div>
           <textarea 
             v-model="manualCookie" 
             placeholder="粘贴完整的 Cookie 字符串..."
@@ -261,7 +266,8 @@ import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import { onClickOutside } from '@vueuse/core'
 import { useRouter } from 'vue-router'
-
+const isDev = import.meta.env.DEV
+const demoCookie = import.meta.env.VITE_DEMO_COOKIE || ''
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -336,7 +342,10 @@ const handleQrLoginSuccess = () => {
   showLogin.value = false
   loginMode.value = 'password'
 }
-
+const fillDemoCookie = () => {
+  manualCookie.value = demoCookie
+  ElMessage.success('已填入演示Cookie，点击登录即可')
+}
 // 处理手动登录（Cookie）
 const handleManualLogin = async () => {
   if (!manualCookie.value) {

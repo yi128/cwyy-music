@@ -24,7 +24,6 @@ request.interceptors.response.use(
         };
     },
     (error) => {
-        console.error('API请求失败:', error);
         return Promise.reject({
             code: 500,
             message: error.message || '请求失败',
@@ -75,7 +74,6 @@ export const loginByPhone = async (phone: string, password: string) => {
         return { code: 500, message: '网络错误', data: null };
     }
 };
-// src/api/realApi.ts
 
 // ==================== 二维码登录相关 ====================
 

@@ -1,10 +1,5 @@
 <template>
   <div class="qr-login">
-    <div class="qr-header">
-      <h3>扫码登录</h3>
-      <button class="close-btn" @click="$emit('cancel')">×</button>
-    </div>
-    
     <div class="qr-content">
       <div class="qr-container">
         <img v-if="qrUrl" :src="qrUrl" class="qr-image" />
@@ -38,7 +33,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import { getQrCodeKey, getQrCodeBase64, checkQrStatus } from '@/api/realApi';
+import { getQrCodeKey, getQrCodeBase64, checkQrStatus } from '@/api/modules/user';
 import { useUserStore } from '@/stores/user';
 import { ElMessage } from 'element-plus';
 
@@ -186,21 +181,6 @@ onUnmounted(() => {
   width: 360px;
   max-width: 90vw;
   overflow: hidden;
-}
-
-.qr-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.qr-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 500;
-  color: #333;
 }
 
 .close-btn {

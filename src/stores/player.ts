@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getSongDetail, getSongUrl } from '@/api/realApi'  // 从api导入mock函数
+import { getSongDetail, getSongUrl } from '@/api/modules/song'
 export const usePlayerStore = defineStore('player', () => {
     // ========== state ==========
     const playlist = ref<any[]>([])//播放列表
@@ -47,7 +47,6 @@ export const usePlayerStore = defineStore('player', () => {
                 if (index !== -1) {
                     currentIndex.value = index
                 } else {
-                    // ✅ 添加时也创建新对象
                     playlist.value.push({ ...song })  // 浅拷贝
                     currentIndex.value = playlist.value.length - 1
                 }
@@ -66,7 +65,7 @@ export const usePlayerStore = defineStore('player', () => {
     }
     // 播放歌单列表
     const playPlaylist = (songs: any[], startIndex = 0) => {
-        // ✅ 创建新数组，断开引用
+        //  创建新数组，断开引用
         playlist.value = songs.map(song => ({ ...song }))  // 浅拷贝就够用
         currentIndex.value = startIndex
         playing.value = true

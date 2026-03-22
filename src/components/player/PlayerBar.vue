@@ -1,4 +1,4 @@
-<!-- 底部面板 -->
+<!-- 播放器面板 -->
  <template>
   <div class="player-bar">
     <audio
@@ -11,7 +11,7 @@
       <!-- 左侧：歌曲信息 -->
       <div class="player-left">
         <div class="song-cover">
-          <img :src="picUrl" alt="专辑封面" />
+          <img :src="picUrl" v-show="picUrl" />
         </div>
         <div class="song-info">
           <div class="song-name">{{ songName }}</div>
@@ -135,7 +135,7 @@ watch(currentSong, async(newSong) => {
   playerStore.setCurrentTime(0)
   if (newSong) {
     // 动态导入api模块,避免循环依赖
-    const { getSongUrl } = await import('@/api/realApi')
+    const { getSongUrl } = await import('@/api/modules/song')
     const res = await getSongUrl(newSong.id)
     if (res.code === 200 && res.data?.url) {
       audioRef.value.src = res.data.url

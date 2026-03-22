@@ -7,12 +7,13 @@
         :autoplay="true"
         :interval="5000"
         indicator-position="none"
+        @change="handleBannerChange"
       >
-        <el-carousel-item v-for="b in banners" :key="b.targetId">
+        <el-carousel-item v-for="(b,index) in banners" :key="b.targetId">
           <div 
             class="banner-item"
             :style="{ 
-              background: `linear-gradient(90deg, ${getGradientColor(b.imageUrl)} 0%, transparent 30%, transparent 70%, ${getGradientColor(b.imageUrl)} 100%)`
+              background: `linear-gradient(90deg, ${bannerColors[index]} 0%, transparent 30%, transparent 80%, ${bannerColors[index]} 100%)`
             }"
           >
             <div class="banner-content">
@@ -20,6 +21,8 @@
                 :src="b.imageUrl" 
                 :alt="b.typeTitle" 
                 class="banner-img"
+                :loading="index === 0 ? 'eager' : 'lazy'"
+                :fetchpriority="index === 0 ? 'high' : 'auto'"
               />
             </div>
           </div>
@@ -30,7 +33,7 @@
       <div class="banner-dots">
         <span 
           v-for="(b, index) in banners" 
-          :key="index"
+          :key="b.targetId"
           class="dot"
           :class="{ active: currentBannerIndex === index }"
           @click="currentBannerIndex = index"
@@ -87,53 +90,39 @@
 import {ref,onMounted} from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
-import {getRecommendPlaylists, getBanners,getNewSongs } from '@/api/realApi'
+import { getRecommendPlaylists, getBanners,getNewSongs } from '@/api/modules/banner'
 import type { Song, Playlist, Banner } from '@/types/music'
-import { formatArtists,formatCount } from '@/utils/format'
+import { formatArtists, formatCount } from '@/utils/format'
+import { getDominantColor } from '@/utils/color'
 const router = useRouter()
 const playerStore = usePlayerStore()
 const recommendPlaylists = ref<Playlist[]>([])
 const newSongs = ref<Song[]>([])
 const banners = ref<Banner[]>([])
+const bannerColors = ref<string[]>([])
 const currentBannerIndex = ref(0)
-const bannerHeight = '300px'
-
-// 获取渐变颜色（
-const getGradientColor = (imageUrl: string) => {
-  const hash = imageUrl.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  const colors = [
-    'rgba(236, 65, 65, 0.7)',   // 网易云红 - 主品牌色
-    'rgba(52, 152, 219, 0.7)',  // 天空蓝 - 清新感
-    'rgba(155, 89, 182, 0.7)',  // 紫罗兰 - 优雅感
-    'rgba(46, 204, 113, 0.7)',  // 翡翠绿 - 活力感
-    'rgba(241, 196, 15, 0.7)',  // 琥珀黄 - 温暖感
-    'rgba(230, 126, 34, 0.7)',  // 日落橙 - 热情感
-    'rgba(231, 76, 60, 0.7)',   // 深红色 - 激情感
-    'rgba(26, 188, 156, 0.7)',  // 青绿色 - 自然感
-    'rgba(142, 68, 173, 0.7)',  // 深紫色 - 神秘感
-    'rgba(243, 156, 18, 0.7)',  // 金黄色 - 高贵感
-  ]
-  return colors[hash % colors.length]
-}
+const bannerHeight = '360px'
 
 // 监听轮播图切换
 const handleBannerChange = (index: number) => {
   currentBannerIndex.value = index
 }
-
 //加载数据
 onMounted(async () => {
   try {
       const [playlistsRes, newSongsRes, bannersRes] = await Promise.all ([getRecommendPlaylists(6), getNewSongs(5), getBanners()])
       // 处理轮播图数据
-      banners.value = bannersRes.data.map((b: any) => ({
+      const processedBanners = bannersRes.data.map((b: any) => ({
         ...b,
         imageUrl: b.bigImageUrl || b.imageUrl
       }))
-    
+      banners.value = processedBanners
+      const colors = await Promise.all(
+        processedBanners.map((b: Banner) => getDominantColor(b.imageUrl))
+      )
+      bannerColors.value = colors
       recommendPlaylists.value = playlistsRes.data
       newSongs.value = newSongsRes.data
-      banners.value = bannersRes.data
   } catch (err) {
     console.error('加载失败:', err)
   }
@@ -157,12 +146,11 @@ const showMore = () => {
 .home-page {
   max-width: 100%;
   margin: 0 auto;
-  padding: 20px;
+  padding: 10px 20px;
 }
 /* 轮播图包装器 */
 .banner-wrapper {
   position: relative;
-  margin-bottom: 30px;
   border-radius: 12px;
   overflow: hidden;
 }
@@ -202,10 +190,9 @@ const showMore = () => {
 /* 图片样式 */
 .banner-img {
   width: auto;
-  height: 95%; 
-  max-width: 95%;
+  height: 100%; 
+  max-width: 100%;
   object-fit: contain;
-  border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s ease-in-out;
 }
@@ -246,7 +233,7 @@ const showMore = () => {
   transform: translateY(-1px);
 }
 .recommend-section {
-  margin: 40px 0;
+  margin: 25px 0;
 }
 .new-music-section,.recommend-section{
   padding: 0 100px;

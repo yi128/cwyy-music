@@ -87,7 +87,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import {usePlayerStore} from '@/stores/player'
 import { formatArtists, formatTime } from '@/utils/format'
-import {search} from '@/api/realApi'
+import {search} from '@/api/modules/search'
 import type { Song, Playlist,Artist} from '@/types/music'
 import router from '@/router'
 const route = useRoute()

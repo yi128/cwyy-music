@@ -38,10 +38,26 @@
         </div>
         
         <!-- 歌单描述 -->
-        <p class="description">
-          {{ playlistDetail.description }}
-        </p>
-        
+        <div class="description-wrapper">
+          <p 
+            class="description" 
+            :class="{ 'expanded': isDescriptionExpanded }"
+            :style="{ '-webkit-line-clamp': isDescriptionExpanded ? 'unset' : 2 }"
+          >
+            {{ playlistDetail.description }}
+          </p>
+          <button 
+            v-if="showDescriptionToggle" 
+            class="description-toggle-btn"
+            @click="toggleDescription"
+          >
+            {{ isDescriptionExpanded ? '收起' : '更多' }}
+          </button>
+        </div>
+        <div class="tag" v-if="playlistDetail.tags?.length">
+          标签：
+          <button v-for="(tag,index) in playlistDetail.tags" :key="index">{{ tag }}</button>
+        </div>
         <!-- 按钮区域 -->
         <div class="actions">
           <button class="play-all-btn" @click="playAll">
@@ -74,7 +90,7 @@
 
     <!-- 歌曲列表头部 -->
     <div class="song-list-header">
-      <span class="col-index">#</span>
+      <span class="col-index"></span>
       <span class="col-title">歌曲标题</span>
       <span class="col-artist">歌手</span>
       <span class="col-duration">时长</span>
@@ -96,7 +112,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { getPlaylistDetail } from '@/api/realApi'
+import { getPlaylistDetail } from '@/api/modules/playlist'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { usePlayerStore } from '@/stores/player'
@@ -129,11 +145,27 @@ const songs = ref<Song[]>([])
 const loading = ref(true)
 const error = ref('')
 const collecting = ref(false)
-
+// 描述展开/收起状态
+const isDescriptionExpanded = ref(false)
+const showDescriptionToggle = ref(false)
 // 计算属性：判断歌单是否被收藏
 const isCollected = computed(() => {
   return userStore.isLoggedIn && userStore.isPlaylistCollected(playlistId)
 })
+// 检查描述是否需要显示"更多"按钮
+const checkDescriptionHeight = () => {
+  nextTick(() => {
+    // 简单判断：如果描述文字超过 100 个字符就显示按钮
+    // 或者根据实际行数判断（更精确）
+    const descText = playlistDetail.value.description || ''
+    showDescriptionToggle.value = descText.length > 80
+  })
+}
+
+// 切换描述展开/收起
+const toggleDescription = () => {
+  isDescriptionExpanded.value = !isDescriptionExpanded.value
+}
 
 // 加载歌单详情
 const loadData = async () => {
@@ -145,7 +177,7 @@ const loadData = async () => {
     if (res.code === 200 && res.data) {
       playlistDetail.value = res.data
       songs.value = res.data.tracks || []
-      console.log(songs.value)
+      checkDescriptionHeight()
     } else {
       error.value = "歌单不存在"
     }
@@ -178,7 +210,6 @@ const toggleCollect = async () => {
     
     if (result.success) {
       ElMessage.success(result.message)
-      // ✅ 不需要手动更新 isCollected，因为 computed 会自动更新
     } else {
       ElMessage.error(result.message || '操作失败')
     }
@@ -339,19 +370,62 @@ onMounted(() => {
   margin-left: 5px;
 }
 
-/* 歌单描述 */
+/* 描述区域包装器 */
+.description-wrapper {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+/* 描述文字样式 */
 .description {
   font-size: 14px;
   line-height: 1.6;
   color: #666;
-  margin-bottom: 25px;
   max-width: 600px;
+  margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
+/* 收起状态：最多2行 */
+.description:not(.expanded) {
+  -webkit-line-clamp: 2;
+}
+
+/* 展开状态：不限制行数 */
+.description.expanded {
+  -webkit-line-clamp: unset;
+  display: block;
+}
+
+/* 更多/收起按钮 */
+.description-toggle-btn {
+  background: none;
+  border: none;
+  color: #ec4141;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 0 0 0;
+  margin-top: 4px;
+  transition: color 0.2s;
+}
+
+.description-toggle-btn:hover {
+  color: #d43c3c;
+  text-decoration: underline;
+}
+.tag{
+  margin-bottom:10px;
+  color: #666;
+}
+.tag button {
+  margin:0 5px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius:8px;
+}
 /* 按钮区域 */
 .actions {
   display: flex;

@@ -71,7 +71,7 @@
 <script setup lang="ts">
 import { ref,watch,onUnmounted } from 'vue'
 import router from '@/router'
-import { searchSuggest } from '@/api/realApi'
+import { searchSuggest } from '@/api/modules/search'
 import type { Song, Artist, Album, Playlist } from '@/types/music'
 import {formatArtists} from '@/utils/format'
 // 关键词

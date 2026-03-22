@@ -191,6 +191,9 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       // 每次运行时，Vite 都会检查 vite.config.ts 文件的修改时间，并将该时间戳添加到文件名中。
       // 这有助于在文件名中记录 Vite 的构建时间，以便在构建失败时进行调试。
       // 禁用：timestap: false,
+      outDir: 'dist',           // 输出目录
+      assetsDir: 'assets',       // 静态资源目录
+      sourcemap: false,          // 不生成 sourcemap
       chunkSizeWarningLimit: 2000, // 消除打包大小超过500kb警告
       minify: "terser", // Vite 2.6.x 以上需要配置 minify: "terser", terserOptions 才能生效
       terserOptions: {

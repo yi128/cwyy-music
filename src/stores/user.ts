@@ -1,13 +1,9 @@
 // src/stores/user.ts
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import {
-    loginByPhone,
-    subscribePlaylistById,
-    unsubscribePlaylistById,
-    getUserSubscribedPlaylists,
-    checkPlaylistSubscribed
-} from '@/api/realApi'
+import { getUserSubscribedPlaylists } from '@/api/modules/user'
+import { subscribePlaylistById, unsubscribePlaylistById } from '@/api/modules/playlist'
+
 
 export const useUserStore = defineStore('user', () => {
     // ========== 状态 ==========
@@ -101,7 +97,7 @@ export const useUserStore = defineStore('user', () => {
 
             cookie.value = fullCookieString;
 
-            const { getLoginStatus } = await import('@/api/realApi');
+            const { getLoginStatus } = await import('@/api/modules/user');
             const statusRes = await getLoginStatus();
             console.log('【loginWithCookie】状态返回:', statusRes);
             if (statusRes.code === 200 && statusRes.data?.account?.id) {
@@ -116,7 +112,7 @@ export const useUserStore = defineStore('user', () => {
                         phone: profile.userName || ''
                     };
                 } else {
-                    const { getUserDetail } = await import('@/api/realApi');
+                    const { getUserDetail } = await import('@/api/modules/user');
                     const detailRes = await getUserDetail(userId);
                     if (detailRes.code === 200 && detailRes.data?.profile) {
                         const profile = detailRes.data.profile;
@@ -150,7 +146,7 @@ export const useUserStore = defineStore('user', () => {
             cookie.value = cookieString;
 
             // 从 cookie 中解析用户信息
-            const { getLoginStatus } = await import('@/api/realApi');
+            const { getLoginStatus } = await import('@/api/modules/user');
             const statusRes = await getLoginStatus();
 
             if (statusRes.code === 200 && statusRes.data?.profile) {

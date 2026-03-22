@@ -19,7 +19,6 @@
           <span class="tab-text">我的歌单</span>
         </router-link>
         
-        <!-- 可以添加更多Tab -->
         <div class="tab-item" @click="showComingSoon('关注')">
           <span class="tab-text">关注</span>
         </div>
@@ -105,11 +104,11 @@
       <PlayerBar />
     </footer>
     
-    <!-- 登录弹窗 - 支持手机、二维码和手动Cookie登录 -->
+    <!-- 登录弹窗 - 支持手机、二维码登录 -->
     <div v-if="showLogin" class="modal-overlay" @click.self="showLogin = false">
       <div class="login-modal">
         <div class="modal-header">
-          <h3>{{ loginMode === 'password' ? '登录网易云音乐' : loginMode === 'qr' ? '扫码登录' : '手动登录' }}</h3>
+          <h3>{{ loginMode === 'password' ? '登录网易云音乐' : '扫码登录' }}</h3>
           <button class="close-btn" @click="showLogin = false">×</button>
         </div>
         
@@ -128,14 +127,6 @@
             @click="switchLoginMode('qr')"
           >
             二维码登录
-          </button>
-          <!-- 手动登录标签 -->
-          <button 
-            class="tab-btn" 
-            :class="{ active: loginMode === 'manual' }"
-            @click="switchLoginMode('manual')"
-          >
-            手动登录
           </button>
         </div>
         
@@ -178,66 +169,6 @@
             @cancel="showLogin = false"
           />
         </div>
-
-        <!-- 手动登录区域（用Cookie） -->
-        <div v-else-if="loginMode === 'manual'" class="modal-body manual-login">
-          <div class="manual-tip">
-            <span class="tip-icon">🔑</span>
-            <h4>手动登录（开发用）</h4>
-            <p>从浏览器复制完整Cookie后粘贴到下方</p>
-          </div>
-          <div class="demo-quick-fill" v-if="isDev">
-        <button class="demo-btn" @click="fillDemoCookie">
-          填入演示Cookie
-        </button>
-        <span class="demo-hint">（Cookie已脱敏处理，仅用于演示）</span>
-        </div>
-          <textarea 
-            v-model="manualCookie" 
-            placeholder="粘贴完整的 Cookie 字符串..."
-            rows="4"
-            class="cookie-input"
-          ></textarea>
-          
-          <div class="cookie-actions">
-            <button 
-              class="submit-btn" 
-              @click="handleManualLogin"
-              :disabled="!manualCookie"
-            >
-              登录
-            </button>
-            <button class="help-btn" @click="showCookieHelp = true">
-              如何获取Cookie？
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Cookie帮助弹窗 -->
-    <div v-if="showCookieHelp" class="help-overlay" @click.self="showCookieHelp = false">
-      <div class="help-modal">
-        <div class="help-header">
-          <h4>如何获取Cookie</h4>
-          <button class="close-help-btn" @click="showCookieHelp = false">×</button>
-        </div>
-        <div class="help-content">
-          <ol>
-            <li>打开 <a href="https://music.163.com" target="_blank">网易云音乐网页版</a> 并登录</li>
-            <li>按 <strong>F12</strong> 打开开发者工具</li>
-            <li>点击顶部 <strong>「Application」</strong> 标签</li>
-            <li>在左侧找到 <strong>「Storage」→「Cookies」→「https://music.163.com」</strong></li>
-            <li>右键任意Cookie → 选择 <strong>「全部复制」</strong> 或 <strong>「Copy All」</strong></li>
-            <li>将复制的完整Cookie粘贴到输入框</li>
-          </ol>
-          <div class="help-image-note">
-            <p>📌 复制的内容应该是一长串包含 <code>MUSIC_U=xxx</code> 的文本</p>
-          </div>
-        </div>
-        <div class="help-footer">
-          <button class="got-it-btn" @click="showCookieHelp = false">知道了</button>
-        </div>
       </div>
     </div>
     
@@ -266,8 +197,6 @@ import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import { onClickOutside } from '@vueuse/core'
 import { useRouter } from 'vue-router'
-const isDev = import.meta.env.DEV
-const demoCookie = import.meta.env.VITE_DEMO_COOKIE || ''
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -280,12 +209,8 @@ const showLogin = ref(false)
 const showRegister = ref(false)
 const loginLoading = ref(false)
 
-// 登录模式：'password' | 'qr' | 'manual'
+// 登录模式：'password' | 'qr' 
 const loginMode = ref('password')
-
-// 手动登录相关
-const manualCookie = ref('')
-const showCookieHelp = ref(false)
 
 // 同意条款
 const agreeTerms = ref(false)
@@ -342,28 +267,6 @@ const handleQrLoginSuccess = () => {
   showLogin.value = false
   loginMode.value = 'password'
 }
-const fillDemoCookie = () => {
-  manualCookie.value = demoCookie
-  ElMessage.success('已填入演示Cookie，点击登录即可')
-}
-// 处理手动登录（Cookie）
-const handleManualLogin = async () => {
-  if (!manualCookie.value) {
-    ElMessage.warning('请先粘贴Cookie')
-    return
-  }
-  
-  const result = await userStore.loginWithCookie(manualCookie.value)
-  if (result.success) {
-    ElMessage.success('登录成功')
-    showLogin.value = false
-    manualCookie.value = ''
-    loginMode.value = 'password'
-  } else {
-    ElMessage.error(result.message || '登录失败')
-  }
-}
-
 // 点击外部关闭菜单
 onClickOutside(userMenuRef, () => {
   showUserMenu.value = false
@@ -408,13 +311,14 @@ const handleLogout = () => {
 /* 顶部Tab导航样式 */
 .tab-header {
   height: 70px;
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
+  background: rgb(51, 51, 51);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  justify-content:space-around;
+  border-bottom: 1px solid #000; 
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); 
+  padding:0 10px;
+  color:rgb(204, 204, 204);
   z-index: 100;
 }
 
@@ -429,7 +333,7 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   cursor: pointer;
-  color: #333;
+  color: rgb(204, 204, 204);
   text-decoration: none;
   font-size: 16px;
   position: relative;
@@ -488,7 +392,7 @@ const handleLogout = () => {
 .login-btn, .register-btn {
   background: none;
   border: none;
-  color: #666;
+  color: rgb(204, 204, 204);
   font-size: 14px;
   cursor: pointer;
   padding: 5px 0;
@@ -549,7 +453,7 @@ const handleLogout = () => {
 
 .user-name {
   font-size: 14px;
-  color: #333;
+  color: rgb(204, 204, 204);
   max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -770,78 +674,6 @@ const handleLogout = () => {
 /* 二维码登录弹窗体 */
 .qr-modal-body {
   padding: 0;
-}
-
-/* 手动登录区域 */
-.manual-login {
-  padding: 20px;
-}
-
-.manual-tip {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.manual-tip .tip-icon {
-  font-size: 32px;
-  display: block;
-  margin-bottom: 10px;
-}
-
-.manual-tip h4 {
-  margin: 0 0 8px 0;
-  color: #333;
-}
-
-.manual-tip p {
-  margin: 0;
-  color: #999;
-  font-size: 13px;
-}
-
-.cookie-input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #dcdfe6;
-  border-radius: 8px;
-  font-size: 12px;
-  font-family: monospace;
-  resize: vertical;
-  margin-bottom: 15px;
-  box-sizing: border-box;
-}
-
-.cookie-input:focus {
-  border-color: #ec4141;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(236, 65, 65, 0.1);
-}
-
-.cookie-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.cookie-actions .submit-btn {
-  flex: 2;
-  margin: 0;
-}
-
-.cookie-actions .help-btn {
-  flex: 1;
-  padding: 10px;
-  background: #f5f5f5;
-  color: #666;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.cookie-actions .help-btn:hover {
-  background: #e8e8e8;
-  color: #333;
 }
 
 /* 输入框样式 */

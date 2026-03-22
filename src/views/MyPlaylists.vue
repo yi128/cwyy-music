@@ -111,7 +111,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { getUserCreatedPlaylists, getUserSubscribedPlaylists } from '@/api/realApi'
+import { getUserCreatedPlaylists, getUserSubscribedPlaylists } from '@/api/modules/user'
 import { useUserStore } from '@/stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { Playlist } from '@/types/music'

@@ -8,9 +8,6 @@ const whiteList = ['/', '/search', '/playlist/'];
 // 需要登录才能访问的页面
 const needLoginPages = [
     '/my-playlists',
-    // 以后可以添加更多需要登录的页面
-    // '/user/profile',
-    // '/user/settings',
 ];
 
 // 路由守卫
@@ -32,7 +29,7 @@ router.beforeEach((to, from, next) => {
         }
     }
 
-    // 页面标题（可选）
+    // 页面标题
     if (to.meta.title) {
         document.title = `${to.meta.title} - 网易云音乐`;
     } else {
